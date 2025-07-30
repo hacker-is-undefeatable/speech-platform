@@ -1,0 +1,216 @@
+import os
+import pandas as pd
+import torch
+from datasets import Dataset, Audio
+from transformers import WhisperProcessor, WhisperForConditionalGeneration, Trainer, TrainingArguments
+import librosa
+import numpy as np
+from pathlib import Path
+import logging
+import evaluate  # Import evaluate library for WER
+
+# Disable W&B
+os.environ["WANDB_MODE"] = "disabled"
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+logger.info(f"Using device: {device}")
+
+# Define paths (Kaggle-specific)
+DATASET_PATH = "/kaggle/input/cantonese-data/dataset/dataset"
+METADATA_FILE = "/kaggle/input/cantonese-data/cnt_asr_metadata_1000.csv"
+OUTPUT_DIR = "/kaggle/working/whisper_finetuned_cantonese"
+
+# Check if dataset files exist
+def validate_dataset_paths():
+    try:
+        df = pd.read_csv(METADATA_FILE)
+        for audio_path in df["audio_path"]:
+            audio_full_path = os.path.join(DATASET_PATH, "audio", os.path.basename(audio_path))
+            text_full_path = os.path.join(DATASET_PATH, "transcription", os.path.basename(audio_path).replace(".wav", ".txt"))
+            if not os.path.exists(audio_full_path):
+                logger.error(f"Audio file not found: {audio_full_path}")
+                raise FileNotFoundError(f"Audio file not found: {audio_full_path}")
+            if not os.path.exists(text_full_path):
+                logger.error(f"Text file not found: {text_full_path}")
+                raise FileNotFoundError(f"Text file not found: {text_full_path}")
+        logger.info("All dataset files validated successfully")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to validate dataset paths: {str(e)}")
+        raise
+
+# Load and preprocess dataset
+def load_dataset():
+    df = validate_dataset_paths()
+    dataset = Dataset.from_dict({
+        "audio": [os.path.join(DATASET_PATH, "audio", os.path.basename(path)) for path in df["audio_path"]],
+        "text": [os.path.join(DATASET_PATH, "transcription", os.path.basename(path).replace(".wav", ".txt")) for path in df["audio_path"]],
+        "sex": df["sex"].tolist(),
+        "duration": df["duration"].tolist()
+    }).cast_column("audio", Audio(sampling_rate=16000))
+    logger.info(f"Dataset loaded with {len(dataset)} samples")
+    return dataset
+
+# Preprocess audio and text
+def preprocess_data(batch, processor):
+    try:
+        audio = batch["audio"]
+        # Load transcription from file
+        with open(batch["text"], 'r', encoding='utf-8') as f:
+            text = f.read().strip()
+        # Process audio
+        input_features = processor(audio["array"], sampling_rate=audio["sampling_rate"], return_tensors="pt").input_features[0]
+        # Tokenize text
+        labels = processor.tokenizer(text).input_ids
+        logger.debug(f"Processed sample: input_features shape={input_features.shape}, labels length={len(labels)}")
+        return {"input_features": input_features, "labels": labels, "text": text}  # Keep raw text for evaluation
+    except Exception as e:
+        logger.error(f"Error preprocessing sample: {str(e)}")
+        raise
+
+# Data collator
+class DataCollatorSpeechSeq2Seq:
+    def __init__(self, processor):
+        self.processor = processor
+    
+    def __call__(self, features):
+        try:
+            input_features = [{"input_features": feature["input_features"]} for feature in features]
+            labels = [{"input_ids": feature["labels"]} for feature in features]
+            batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+            batch["labels"] = self.processor.tokenizer.pad(labels, return_tensors="pt")["input_ids"]
+            batch["labels"] = batch["labels"].masked_fill(batch["labels"] == self.processor.tokenizer.pad_token_id, -100)
+            logger.info(f"Batch shapes: input_features={batch['input_features'].shape}, labels={batch['labels'].shape}")
+            return batch
+        except Exception as e:
+            logger.error(f"Error in data collator: {str(e)}")
+            raise
+
+def compute_wer(model, processor, eval_dataset, device):
+    wer_metric = evaluate.load("wer")
+    predictions = []
+    references = []
+    
+    model.eval()
+    for sample in eval_dataset:
+        try:
+            # Prepare input
+            input_features = torch.tensor(sample["input_features"]).unsqueeze(0).to(device)
+            # Generate transcription
+            with torch.no_grad():
+                generated_ids = model.generate(input_features)
+            transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            # Get reference text
+            reference = sample["text"]
+            predictions.append(transcription)
+            references.append(reference)
+        except Exception as e:
+            logger.error(f"Error during WER computation for sample: {str(e)}")
+            continue
+    
+    # Compute WER
+    wer = wer_metric.compute(predictions=predictions, references=references)
+    logger.info(f"Word Error Rate (WER): {wer:.4f}")
+    return wer
+
+def main():
+    # Check GPU memory
+    if torch.cuda.is_available():
+        logger.info(f"GPU memory summary:\n{torch.cuda.memory_summary()}")
+    
+    # Create output directory
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    logger.info(f"Output directory created: {OUTPUT_DIR}")
+    
+    # Load dataset
+    dataset = load_dataset()
+    
+    # Load processor and model
+    try:
+        processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="zh", task="transcribe")
+        model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small").to(device)
+        logger.info("Model and processor loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load model/processor: {str(e)}")
+        raise
+    
+    # Split dataset and use a small subset
+    dataset = dataset.train_test_split(test_size=0.1)
+    train_dataset = dataset["train"]
+    eval_dataset = dataset["test"]
+    logger.info(f"Dataset split: train={len(train_dataset)}, eval={len(eval_dataset)}")
+    
+    # Preprocess datasets
+    try:
+        train_dataset = train_dataset.map(lambda batch: preprocess_data(batch, processor), remove_columns=["audio", "sex", "duration"])
+        eval_dataset = eval_dataset.map(lambda batch: preprocess_data(batch, processor), remove_columns=["audio", "sex", "duration"])
+        logger.info(f"Preprocessing complete. Train sample: {train_dataset[0]}")
+    except Exception as e:
+        logger.error(f"Preprocessing failed: {str(e)}")
+        raise
+    
+    # Initialize data collator
+    data_collator = DataCollatorSpeechSeq2Seq(processor)
+    
+    # Simplified training arguments
+    training_args = TrainingArguments(
+        output_dir=OUTPUT_DIR,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
+        num_train_epochs=10,
+        learning_rate=1e-5,
+        logging_steps=1,
+        eval_strategy="no",
+        save_strategy="no",
+        fp16=True if torch.cuda.is_available() else False,
+        report_to="none",  # Disable W&B and other integrations
+    )
+    
+    # Initialize trainer
+    try:
+        trainer = Trainer(
+            model=model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            data_collator=data_collator,
+        )
+        logger.info("Trainer initialized")
+    except Exception as e:
+        logger.error(f"Trainer initialization failed: {str(e)}")
+        raise
+    
+    # Train with detailed error handling
+    try:
+        logger.info("Starting training...")
+        trainer.train()
+        logger.info("Training completed")
+    except Exception as e:
+        logger.error(f"Training failed with error: {str(e)}")
+        raise
+    
+    # Compute and print WER
+    try:
+        logger.info("Computing WER on evaluation dataset...")
+        wer = compute_wer(model, processor, eval_dataset, device)
+        print(f"Word Error Rate (WER): {wer:.4f}")
+    except Exception as e:
+        logger.error(f"WER computation failed: {str(e)}")
+        raise
+    
+    # Save model
+    try:
+        model.save_pretrained(OUTPUT_DIR)
+        processor.save_pretrained(OUTPUT_DIR)
+        logger.info("Model and processor saved")
+    except Exception as e:
+        logger.error(f"Failed to save model: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    main()

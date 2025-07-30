@@ -1,0 +1,3 @@
+Login Page Enter
+Login Page warning
+Register Page warning, successful login, error also

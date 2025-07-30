@@ -1,0 +1,160 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #00000050;
+  z-index: 1000;
+  min-height: 40px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 0px;
+}
+
+.navbar-links a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 25px; /* Adjusted padding from SCSS */
+  text-decoration: none;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 400; /* Slightly bolder for emphasis, aligned with SCSS */
+  text-transform: uppercase; /* From SCSS */
+  transition: color 0.5s ease; /* Smooth color transition from SCSS */
+  z-index: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-links a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-top: 2px solid #ffffff; /* White border to match your theme */
+  border-bottom: 2px solid #ffffff;
+  transform: scaleY(2);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease; /* From SCSS */
+  z-index: -1;
+}
+
+.navbar-links a::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff83e6, #8000ff); /* Your gradient theme */
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease; /* From SCSS */
+  z-index: -1;
+}
+
+.navbar-links a:hover {
+  color: #ffffff; /* White text on hover, as per SCSS */
+}
+
+.navbar-links a:hover::before {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+.navbar-links a:hover::after {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+.navbar-links a.active {
+  color: #ffffff; /* Maintain white for active state */
+  font-weight: 600;
+  position: relative;
+  background: linear-gradient(90deg, #ff83e6, #8000ff); /* Gradient for active state */
+}
+
+.navbar-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff83e6, #8000ff);
+  border-radius: 1px;
+  z-index: 1;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* .nav-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+} */
+
+.logout-button,
+.signup-button,
+.login-button {
+  margin-right: 20px;
+  color: #fff;
+  background: linear-gradient(90deg, #ff83e6, #8000ff);
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  height: 45px;
+  width: 150px;
+  font-size: 20px;
+  z-index: 1;
+}
+
+.logout-button:hover,
+.signup-button:hover,
+.login-button:hover {
+  transform: scale(1.1);
+}
+
+.coin {
+  width: 30px;
+  margin-right: 10px;
+}
+
+.credits-display {
+  color: white;
+  margin-right: 0px;
+}
+
+.credits-box {
+  display: flex;
+  align-items: center;
+  background: #00000050; /* Semi-transparent black to match navbar theme */
+  padding: 5px 15px;
+  border-radius: 15px; /* Rounded corners */
+  margin-left: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
+  cursor: pointer
+}
