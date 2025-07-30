@@ -88,12 +88,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
             <NavLink to="/files" className={({ isActive }) => isActive ? "active" : ""}>
               History
             </NavLink>
-            <NavLink to="/subscription" className={({ isActive }) => isActive ? "active" : ""}>
-              Subscription
-            </NavLink>
-            <NavLink to="/profile" className={({ isActive }) => isActive ? "active" : ""}>
-              Profile
-            </NavLink>
             <NavLink to="/help" className={({ isActive }) => isActive ? "active" : ""}>
               Support
             </NavLink>

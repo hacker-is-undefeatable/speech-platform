@@ -8,9 +8,7 @@ import Help from './pages/Help';
 import Transcribe from './pages/Transcribe';
 import Files from './pages/Files';
 import Settings from './pages/Settings';
-import Subscription from './pages/Subscription';
 import Pricing from './pages/Pricing';
-import Profile from './pages/Profile';
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -68,16 +66,8 @@ function AppContent() {
             element={<Settings isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
-            path="/subscription"
-            element={<Subscription isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
-          />
-          <Route
             path="/pricing"
             element={<Pricing isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
-          />
-          <Route
-            path="/profile"
-            element={<Profile isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
         </Routes>
       </div>

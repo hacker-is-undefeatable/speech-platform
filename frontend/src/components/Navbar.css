@@ -154,7 +154,7 @@
   background: #00000050; /* Semi-transparent black to match navbar theme */
   padding: 5px 15px;
   border-radius: 15px; /* Rounded corners */
-  margin-left: 20px;
+  margin-left: 380px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
   cursor: pointer
 }
