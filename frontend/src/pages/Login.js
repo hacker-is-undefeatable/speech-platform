@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-// import SmokeyCursor from '../components/lightswind/smokey-cursor';
 import './Login.css';
 
 export default function Login({ setIsAuthenticated }) {
@@ -14,32 +13,43 @@ export default function Login({ setIsAuthenticated }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [warnings, setWarnings] = useState({});
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    number: false,
+    specialChar: false,
+    upperLower: false,
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Check for register mode in query parameters
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('mode') === 'register') {
       setIsRegister(true);
     }
   }, [location.search]);
 
-  // Add Enter key handler for both Login and Register pages
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Enter') {
         handleSubmit();
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-
-    // Cleanup event listener on component unmount
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [email, password, confirmPassword, firstName, lastName, isRegister]); // Dependencies to ensure latest values
+  }, [email, password, confirmPassword, firstName, lastName, isRegister]);
+
+  useEffect(() => {
+    setPasswordCriteria({
+      length: password.length >= 8,
+      number: /\d/.test(password),
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      upperLower: /[a-z]/.test(password) && /[A-Z]/.test(password),
+    });
+  }, [password]);
 
   const translations = {
     en: {
@@ -50,8 +60,6 @@ export default function Login({ setIsAuthenticated }) {
       email: 'Email',
       password: 'Password',
       confirmPassword: 'Confirm Password',
-      login: 'Login',
-      register: 'Register',
       toggleRegister: 'No account? Register',
       toggleLogin: 'Already have an account? Login',
       failure: 'Registration/Login Failed',
@@ -94,7 +102,6 @@ export default function Login({ setIsAuthenticated }) {
 
     try {
       if (isRegister) {
-        // Register with Supabase
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -113,7 +120,6 @@ export default function Login({ setIsAuthenticated }) {
         }
 
         if (data.user) {
-          // Insert data into user_profiles table
           const { error: profileError } = await supabase.from('user_profiles').insert({
             id: data.user.id,
             email: email,
@@ -128,18 +134,15 @@ export default function Login({ setIsAuthenticated }) {
           }
 
           if (data.session) {
-            // If email confirmation is disabled, a session is created
             localStorage.setItem('token', data.session.access_token);
             setIsAuthenticated(true);
             navigate('/');
           } else {
-            // If email confirmation is enabled, inform user
             alert('Registration successful! Please check your email to confirm your account.');
             navigate('/login');
           }
         }
       } else {
-        // Login with Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -175,10 +178,10 @@ export default function Login({ setIsAuthenticated }) {
 
   return (
     <div className="login-container">
-      {/* <SmokeyCursor /> */}
       <div className="content-container-login">
         <div className="login-box">
           <div className="login-content">
+            
             <a href="/" className="back-link" onClick={handleBack}>
               <img src="images/arrow.png" alt="Back" className="back-arrow" />
             </a>
@@ -211,6 +214,7 @@ export default function Login({ setIsAuthenticated }) {
               onPaste={handlePaste}
             />
             {warnings.email && <div className="warning">{warnings.email}</div>}
+
             <div className="password-wrapper">
               <input
                 className="input-field"
@@ -221,13 +225,54 @@ export default function Login({ setIsAuthenticated }) {
                 onPaste={handlePaste}
               />
               <button
+                type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? t.hidePassword : t.showPassword}
+                <svg
+                  id="eyeIcon"
+                  style={{ display: showPassword ? 'none' : 'inline' }}
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+                <svg
+                  id="eyeSlashIcon"
+                  style={{ display: showPassword ? 'inline' : 'none' }}
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7.59-2.41L19.5 5.59 18.41 4.5 4.5 18.41 5.59 19.5 7.3 17.81c-.67-.44-1.27-.95-1.79-1.51C5.5 14.84 7 12 12 12c1.76 0 3.41.69 4.67 1.88l1.73-1.73zM12 15c-1.66 0-3-1.34-3-3 0-.67.22-1.27.59-1.79l2.21 2.21z"/>
+                </svg>
               </button>
             </div>
+
+            {isRegister && (
+              <div className="password-requirements">
+                <p className={passwordCriteria.length ? 'valid' : 'invalid'}>
+                  {passwordCriteria.length ? '✔' : '✖'} Minimum 8 letters
+                </p>
+                <p className={passwordCriteria.number ? 'valid' : 'invalid'}>
+                  {passwordCriteria.number ? '✔' : '✖'} At least one number
+                </p>
+                <p className={passwordCriteria.specialChar ? 'valid' : 'invalid'}>
+                  {passwordCriteria.specialChar ? '✔' : '✖'} At least one special character
+                </p>
+                <p className={passwordCriteria.upperLower ? 'valid' : 'invalid'}>
+                  {passwordCriteria.upperLower ? '✔' : '✖'} At least one uppercase & lowercase letter
+                </p>
+              </div>
+            )}
+
             {warnings.password && <div className="warning">{warnings.password}</div>}
+
             {isRegister && (
               <>
                 <div className="password-wrapper">
@@ -240,15 +285,40 @@ export default function Login({ setIsAuthenticated }) {
                     onPaste={handlePaste}
                   />
                   <button
+                    type="button"
                     className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? t.hidePassword : t.showPassword}
+                    <svg
+                      id="eyeIcon"
+                      style={{ display: showConfirmPassword ? 'none' : 'inline' }}
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                    <svg
+                      id="eyeSlashIcon"
+                      style={{ display: showConfirmPassword ? 'inline' : 'none' }}
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7.59-2.41L19.5 5.59 18.41 4.5 4.5 18.41 5.59 19.5 7.3 17.81c-.67-.44-1.27-.95-1.79-1.51C5.5 14.84 7 12 12 12c1.76 0 3.41.69 4.67 1.88l1.73-1.73zM12 15c-1.66 0-3-1.34-3-3 0-.67.22-1.27.59-1.79l2.21 2.21z"/>
+                    </svg>
                   </button>
                 </div>
-                {warnings.confirmPassword && <div className="warning">{warnings.confirmPassword}</div>}
+                {warnings.confirmPassword && (
+                  <div className="warning">{warnings.confirmPassword}</div>
+                )}
               </>
             )}
+
             <button className="submit-button" onClick={handleSubmit}>
               {isRegister ? t.register : t.login}
             </button>

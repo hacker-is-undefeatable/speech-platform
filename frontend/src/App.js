@@ -9,6 +9,13 @@ import Transcribe from './pages/Transcribe';
 import Files from './pages/Files';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import S2T from './pages/speech-to-text';
+import T2S from './pages/text-to-speech';
+
+// ProtectedRoute component to handle authentication
+const ProtectedRoute = ({ isAuthenticated, children }) => {
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,15 +42,26 @@ function AppContent() {
           setLanguage={setLanguage}
         />
       )}
-      <div className="content">
+      <div className={`content ${isAuthenticated ? 'content-with-sidebar' : ''}`}>
         <Routes>
+          {/* Public Routes */}
           <Route
             path="/"
             element={<Home isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
             path="/login"
-            element={isAuthenticated ? <Navigate to="/" /> : <Login setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+            element={
+              isAuthenticated ? (
+                <Navigate to="/app/transcribe" />
+              ) : (
+                <Login setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              )
+            }
+          />
+          <Route
+            path="/pricing"
+            element={<Pricing isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
             path="/about"
@@ -54,20 +72,56 @@ function AppContent() {
             element={<Help isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
-            path="/transcribe"
-            element={<Transcribe isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+            path="/speech-to-text"
+            element={<S2T isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
-            path="/files"
-            element={<Files isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+            path="/text-to-speech"
+            element={<T2S isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
-            path="/settings"
-            element={<Settings isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+            path="/text-to-speech"
+            element={<T2S isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+          />
+                    <Route
+            path="/text-to-speech"
+            element={<T2S isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+          />
+                    <Route
+            path="/text-to-speech"
+            element={<T2S isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
-            path="/pricing"
-            element={<Pricing isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+            path="/app/transcribe"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Transcribe isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/files"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Files isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/help"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Help isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/settings"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Settings isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </div>

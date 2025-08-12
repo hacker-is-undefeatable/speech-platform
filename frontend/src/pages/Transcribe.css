@@ -10,7 +10,7 @@
   min-height: 100vh;
   width: 100%;
   overflow: auto;
-  background: #000; /* Changed to black */
+  background: #000;
 }
 
 .transcribe-container .upload-instructions {
@@ -18,7 +18,7 @@
 }
 
 .transcribe-container h3 {
-  color: #fff; /* White for contrast */
+  color: #fff;
   margin-bottom: 20px;
   margin-top: 20px;
 }
@@ -28,7 +28,7 @@
   display: block;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 20px; /* Optional: add spacing above */
+  margin-top: 20px;
   color: #fff;
   background: linear-gradient(90deg, #ff83e6, #8000ff);
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
@@ -68,14 +68,14 @@
 }
 
 p {
-  color: #ddd; /* Light gray for readability */
+  color: #ddd;
   text-align: center;
   margin-bottom: 20px;
 }
 
 /* Drop Zone Styling */
 .drop-zone {
-  color: #eee; /* Light text */
+  color: #eee;
   border: 2px dashed #555;
   padding: 20px;
   text-align: center;
@@ -194,11 +194,49 @@ th {
   box-sizing: border-box;
 }
 
-/* Audio Player Styling */
-.col-audio audio {
-  width: 100%; /* Remove max-width to auto-adjust */
-  display: block;
-  margin: 5px 0;
+/* WaveSurfer Styling */
+.audio-content {
+  width: 100%;
+  height: 70px; /* Adjusted for table row, slightly taller to accommodate waveform */
+  position: relative;
+}
+
+.waveform {
+  width: calc(100% - 50px); /* Adjusted to fit play button */
+  height: 100%;
+  margin-left: 50px;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-controls {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+}
+
+.play-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 0.5em;
+}
+
+.play-button:hover {
+  background-color: #e0e0e0;
+}
+
+.play-pause-icon {
+  width: 24px;
+  height: 24px;
 }
 
 /* Error Message Styling */
@@ -253,7 +291,7 @@ button[style*="margin-top: 10px"] {
 .transcript-table th,
 .transcript-table td {
   padding: 0.5rem 1rem;
-  height: 40px;
+  height: 80px; /* Increased to accommodate waveform height */
   white-space: nowrap;
   font-weight: 400;
   font-size: 0.95rem;
@@ -316,7 +354,23 @@ button[style*="margin-top: 10px"] {
     min-height: 50px;
   }
 
-  .col-audio audio {
-    width: 100%; /* Ensure audio scales on small screens */
+  .audio-content {
+    height: 60px; /* Slightly smaller for mobile */
+  }
+
+  .waveform {
+    width: calc(100% - 40px);
+    margin-left: 40px;
+  }
+
+  .play-button {
+    width: 24px;
+    height: 24px;
+    padding: 0.4em;
+  }
+
+  .play-pause-icon {
+    width: 18px;
+    height: 18px;
   }
 }

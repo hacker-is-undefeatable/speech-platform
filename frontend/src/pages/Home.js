@@ -1,19 +1,79 @@
-import React from 'react';
-import SmokeyCursor from '../components/lightswind/smokey-cursor'; // Adjust the path based on your file structure
+import React, { useState, useEffect, useRef } from 'react';
+// import SmokeyCursor from '../components/lightswind/smokey-cursor';
 import './Home.css';
 import { NavLink, useNavigate } from 'react-router-dom';
+import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js';
 
 function Home({ isAuthenticated, setIsAuthenticated, language, setLanguage }) {
   const navigate = useNavigate();
   const handleSignUp = () => {
     navigate('/login?mode=register');
   };
+  const [demo, setDemo] = useState('conference');
+  const waveformRef = useRef(null);
+  const wavesurferRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    // Reset playing state when switching demos
+    setIsPlaying(false);
+    if (waveformRef.current) {
+      // Destroy existing instance if it exists
+      if (wavesurferRef.current) {
+        wavesurferRef.current.destroy();
+      }
+
+      wavesurferRef.current = WaveSurfer.create({
+        container: waveformRef.current,
+        waveColor: '#7d7d7dff',
+        progressColor: '#9500ffff',
+        barWidth: 4,
+        height: 50,
+        responsive: true,
+        barRadius: 3,
+      });
+
+      wavesurferRef.current.on('play', () => setIsPlaying(true));
+      wavesurferRef.current.on('pause', () => setIsPlaying(false));
+      wavesurferRef.current.on('finish', () => setIsPlaying(false)); // Reset on finish
+
+      wavesurferRef.current.on('interaction', () => {
+        if (!isPlaying) {
+          wavesurferRef.current.play();
+        }
+      });
+
+      // Load audio based on the current demo
+      if (demo === 'conference') {
+        wavesurferRef.current.load('/audio/conference-audio.mp3');
+      } else if (demo === 'interview') {
+        wavesurferRef.current.load('/audio/interview-audio.mp3');
+      } else if (demo === 'medical') {
+        wavesurferRef.current.load('/audio/medical-audio.mp3');
+      }
+
+      return () => {
+        if (wavesurferRef.current) {
+          wavesurferRef.current.destroy();
+          wavesurferRef.current = null;
+        }
+      };
+    }
+  }, [demo]);
+
+  const handleTogglePlay = () => {
+    if (wavesurferRef.current) {
+      if (isPlaying) {
+        wavesurferRef.current.pause();
+      } else {
+        wavesurferRef.current.play();
+      }
+    }
+  };
+
   return (
     <div className="home-container">
-      {/* SmokeyCursor as background */}
-      <SmokeyCursor />
-      
-      {/* Foreground content */}
+      {/* <SmokeyCursor /> */}
       <div className="content-container">
         {isAuthenticated ? (
           <>
@@ -30,9 +90,114 @@ function Home({ isAuthenticated, setIsAuthenticated, language, setLanguage }) {
             <p>
               Unlock Cantonese audio with swift, AI-powered transcription, blending real-time precision <br /> and multi-dialect mastery in an enchanting experience.
             </p>
-            <button className="custom-button" onClick={handleSignUp}> 
+            <button className="CTA-button" onClick={handleSignUp}> 
               Get Started
             </button>
+            <button className="Contact-button" onClick={handleSignUp}> 
+              Contact Us
+            </button>
+            <div className="demo-container">
+              <div className="demo-transcripts">
+                <h2>Demo</h2>
+                <ul className="demo-buttons">
+                  <li>
+                    <button
+                      className={`demo-button ${demo === 'conference' ? 'active' : ''}`}
+                      onClick={(e) => { e.preventDefault(); setDemo('conference'); }}
+                    >
+                      Conference Call
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className={`demo-button ${demo === 'interview' ? 'active' : ''}`}
+                      onClick={(e) => { e.preventDefault(); setDemo('interview'); }}
+                    >
+                      Interview
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className={`demo-button ${demo === 'medical' ? 'active' : ''}`}
+                      onClick={(e) => { e.preventDefault(); setDemo('medical'); }}
+                    >
+                      Medical Interview
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div className="demo-content">
+                {demo === 'conference' && (
+                  <>
+                    <div className="audio-content">
+                      <div id="waveform" ref={waveformRef} className="waveform"></div>
+                      <div className="audio-controls">
+                        <button 
+                          className="play-button" 
+                          onClick={handleTogglePlay} 
+                          aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
+                        >
+                          <img
+                            src={isPlaying ? '/images/pause.png' : '/images/play.png'}
+                            alt={isPlaying ? 'Pause' : 'Play'}
+                            className="play-pause-icon"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="transcript">
+                      <p><strong>SPEAKER 1:</strong> 讀書要從薄到厚再從厚到薄</p>
+                    </div>
+                  </>
+                )}
+                {demo === 'interview' && (
+                  <>
+                    <div className="audio-content">
+                      <div id="waveform" ref={waveformRef} className="waveform"></div>
+                      <div className="audio-controls">
+                        <button 
+                          className="play-button" 
+                          onClick={handleTogglePlay} 
+                          aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
+                        >
+                          <img
+                            src={isPlaying ? '/images/pause.png' : '/images/play.png'}
+                            alt={isPlaying ? 'Pause' : 'Play'}
+                            className="play-pause-icon"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="transcript">
+                      <p><strong>SPEAKER 1:</strong> 所謂會讀書就係本住誠意去讀有價值嘅書</p>
+                    </div>
+                  </>
+                )}
+                {demo === 'medical' && (
+                  <>
+                    <div className="audio-content">
+                      <div id="waveform" ref={waveformRef} className="waveform"></div>
+                      <div className="audio-controls">
+                        <button 
+                          className="play-button" 
+                          onClick={handleTogglePlay} 
+                          aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
+                        >
+                          <img
+                            src={isPlaying ? '/images/pause.png' : '/images/play.png'}
+                            alt={isPlaying ? 'Pause' : 'Play'}
+                            className="play-pause-icon"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="transcript">
+                      <p><strong>SPEAKER 1:</strong> 好書使人更懂得享受人生</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
             <div className="features">
               <div className="feature-card">
                 <div className="feature-card-box">
@@ -81,10 +246,6 @@ function Home({ isAuthenticated, setIsAuthenticated, language, setLanguage }) {
             <div className="footer-section">
               <h3>Follow Us</h3>
               <p className="info">Social Media: Your social media links</p>
-            </div>
-            <div className="footer-section">
-              <h3>About</h3>
-              <p className="info">Your company description</p>
             </div>
           </div>
           <div className="footer-bottom">

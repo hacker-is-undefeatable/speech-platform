@@ -1,160 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: #00000050;
   z-index: 1000;
-  min-height: 40px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   font-size: 1.1rem;
   font-weight: 400;
   letter-spacing: 0.5px;
-  text-transform: capitalize;
 }
 
-.navbar-links {
+/* ======= TOP (public) navbar ======= */
+.navbar-top {
+  width: 100%;
   display: flex;
-  gap: 0px;
+  align-items: center;
+  padding: 10px 20px;
+  min-height: 56px;
+  background: rgba(0,0,0,0.35);
 }
+
+/* ======= LEFT SIDEBAR (authenticated) ======= */
+.navbar-left {
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg, #1c1c1c, #121212);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the container a column so logo + links stack */
+.navbar-left .sidebar-container,
+.navbar-left .sidebar-container * {
+  box-sizing: border-box;
+}
+
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Logo at the very top */
+.sidebar-top {
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.sidebar-logo-img {
+  height: 36px;
+  width: auto;
+  cursor: pointer;
+}
+
+/* Links stacked immediately under logo */
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+/* full-width 'button' style for nav items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  color: #cfcfcf;
+  text-decoration: none;
+  width: 100%;
+  background: transparent;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+}
+.nav-item.active {
+  background: linear-gradient(90deg, #ff83e6, #8000ff);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(128,0,255,0.25);
+}
+.nav-text { margin-left: 6px; }
+
+/* Bottom area: credits + logout pinned at bottom */
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Credits */
+.credits-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.coin { width: 26px; height: 26px; }
+.credits-display { font-weight: 700; color: #fff; }
+
+/* Logout */
+.logout-button {
+  height: 42px;
+  width: 100%;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.logout-button:hover { background: rgba(255,255,255,0.12); }
+
+/* ========== keep the rest of your top-navbar styles below (unchanged) ========== */
+
+.navbar-container {
+  display: flex;
+  width: 100%;
+}
+
+.navbar-logo { margin-right: 20px; }
+.navbar-content {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.navbar-links { display: flex; align-items: center; }
+.navbar-top .navbar-links { flex-direction: row; gap: 20px; }
 
 .navbar-links a {
   position: relative;
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 10px 25px; /* Adjusted padding from SCSS */
+  padding: 10px 15px;
   text-decoration: none;
   color: #ffffff;
-  font-family: 'Roboto', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 400; /* Slightly bolder for emphasis, aligned with SCSS */
-  text-transform: uppercase; /* From SCSS */
-  transition: color 0.5s ease; /* Smooth color transition from SCSS */
-  z-index: 1;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  font-family: 'Lato', sans-serif;
+  font-weight: 500;
+  font-size: 1.1rem;
 }
 
-.navbar-links a::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-top: 2px solid #ffffff; /* White border to match your theme */
-  border-bottom: 2px solid #ffffff;
-  transform: scaleY(2);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease; /* From SCSS */
-  z-index: -1;
+.dropdown { position: relative; }
+.dropdown .dropdown-trigger {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:transparent;
+  border:none;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 8px 12px;
 }
-
-.navbar-links a::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #ff83e6, #8000ff); /* Your gradient theme */
-  transform: scale(0);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease; /* From SCSS */
-  z-index: -1;
+.dropdown-content {
+  position:absolute;
+  top:100%;
+  left:0;
+  background:#fff;
+  border-radius:6px;
+  min-width:160px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.15);
+  z-index:1001;
 }
+.dropdown-item { padding:8px 12px; }
 
-.navbar-links a:hover {
-  color: #ffffff; /* White text on hover, as per SCSS */
-}
-
-.navbar-links a:hover::before {
-  transform: scaleY(1);
-  opacity: 1;
-}
-
-.navbar-links a:hover::after {
-  transform: scaleY(1);
-  opacity: 1;
-}
-
-.navbar-links a.active {
-  color: #ffffff; /* Maintain white for active state */
-  font-weight: 600;
-  position: relative;
-  background: linear-gradient(90deg, #ff83e6, #8000ff); /* Gradient for active state */
-}
-
-.navbar-links a.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, #ff83e6, #8000ff);
-  border-radius: 1px;
-  z-index: 1;
-}
-
-.navbar-actions {
+.navbar-actions { display:flex; align-items:center; }
+.navbar-right-actions {
+  margin-left: auto; /* pushes to far right */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px; /* space between signup & login */
 }
-
-/* .nav-icon {
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
-} */
 
 .logout-button,
 .signup-button,
 .login-button {
-  margin-right: 20px;
   color: #fff;
   background: linear-gradient(90deg, #ff83e6, #8000ff);
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  height: 45px;
-  width: 150px;
-  font-size: 20px;
-  z-index: 1;
+  padding: 8px 14px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
 }
 
-.logout-button:hover,
-.signup-button:hover,
-.login-button:hover {
-  transform: scale(1.1);
+/* small responsive tweak */
+@media (max-width: 900px) {
+  .navbar-left { width: 72px; }
+  .nav-text { display:none; }
+  .sidebar-links { gap: 6px; padding: 8px; }
+  .sidebar-top { padding: 12px; }
 }
 
-.coin {
-  width: 30px;
-  margin-right: 10px;
+.dropdown-icon{
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
 }
 
-.credits-display {
-  color: white;
-  margin-right: 0px;
-}
-
-.credits-box {
-  display: flex;
-  align-items: center;
-  background: #00000050; /* Semi-transparent black to match navbar theme */
-  padding: 5px 15px;
-  border-radius: 15px; /* Rounded corners */
-  margin-left: 380px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
-  cursor: pointer
+.navbar-logo-img {
+  height: 30px;
+  width: auto;
+  vertical-align: middle;
+  cursor: pointer;
 }

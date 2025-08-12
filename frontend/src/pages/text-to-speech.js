@@ -4,7 +4,7 @@ import './Home.css';
 function Transcribe({ isAuthenticated, setIsAuthenticated }) {
   return (
     <div className="home-container">
-      <h1>Transcribe</h1>
+      <h1>Text to Speech</h1>
       <p>Start a new transcription session here.</p>
     </div>
   );

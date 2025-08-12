@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js';
 import './Transcribe.css';
 
 function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage, credit, setCredit }) {
@@ -15,7 +16,8 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
   const [playingIndex, setPlayingIndex] = useState(null);
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
   const navigate = useNavigate();
-  const audioRefs = useRef([]);
+  const waveformRefs = useRef([]);
+  const wavesurferRefs = useRef([]);
 
   const parseTranscript = (text) => {
     if (!text) return [];
@@ -93,6 +95,65 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     loadTranscription();
   }, []);
 
+  useEffect(() => {
+    // Initialize WaveSurfer for each transcript entry
+    waveformRefs.current = Array(transcript.length).fill().map((_, i) => waveformRefs.current[i] || React.createRef());
+    wavesurferRefs.current = Array(transcript.length).fill(null);
+
+    transcript.forEach((entry, index) => {
+      if (entry.audio_chunk_url && waveformRefs.current[index]?.current) {
+        if (wavesurferRefs.current[index]) {
+          wavesurferRefs.current[index].destroy();
+        }
+
+        wavesurferRefs.current[index] = WaveSurfer.create({
+          container: waveformRefs.current[index].current,
+          waveColor: '#7d7d7dff',
+          progressColor: '#9500ffff',
+          barWidth: 4,
+          height: 50,
+          responsive: true,
+          barRadius: 3,
+        });
+
+        wavesurferRefs.current[index].on('play', () => {
+          setPlayingIndex(index);
+        });
+        wavesurferRefs.current[index].on('pause', () => {
+          if (playingIndex === index) setPlayingIndex(null);
+        });
+        wavesurferRefs.current[index].on('finish', () => {
+          if (playingIndex === index) setPlayingIndex(null);
+        });
+        wavesurferRefs.current[index].on('error', (error) => {
+          console.error(`WaveSurfer error at index ${index}:`, error);
+          setError('Failed to load audio for one or more chunks.');
+        });
+
+        wavesurferRefs.current[index].load(entry.audio_chunk_url);
+      }
+    });
+
+    return () => {
+      // Cleanup WaveSurfer instances
+      wavesurferRefs.current.forEach((ws) => {
+        if (ws) {
+          ws.destroy();
+        }
+      });
+      wavesurferRefs.current = [];
+    };
+  }, [transcript]);
+
+  useEffect(() => {
+    // Pause other WaveSurfer instances when one starts playing
+    wavesurferRefs.current.forEach((ws, i) => {
+      if (ws && i !== playingIndex && playingIndex !== null) {
+        ws.pause();
+      }
+    });
+  }, [playingIndex]);
+
   const handleFileChange = (event) => {
     const file = event.target.files ? event.target.files[0] : event.dataTransfer.files[0];
     if (file && file.type === 'audio/wav') {
@@ -100,6 +161,7 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
       setTranscript([]);
       setError('');
       setHasTranscribed(false);
+      setPlayingIndex(null);
     } else {
       alert('Please upload a WAV file.');
       setSelectedFile(null);
@@ -149,7 +211,7 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
       if (userError) throw new Error('Failed to fetch user credits');
 
       const currentCredits = userData.credits || 0;
-      
+
       if (currentCredits < minutes) {
         setShowInsufficientCredits(true);
         setIsLoading(false);
@@ -310,14 +372,19 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     }
   };
 
-  const handleAudioPlay = (index) => {
-    setPlayingIndex(index);
-    audioRefs.current.forEach((audio, i) => {
-      if (audio && i !== index) {
-        audio.pause();
-        audio.currentTime = 0;
+  const handleTogglePlay = (index) => {
+    if (wavesurferRefs.current[index]) {
+      if (playingIndex === index) {
+        wavesurferRefs.current[index].pause();
+      } else {
+        wavesurferRefs.current.forEach((ws, i) => {
+          if (ws && i !== index) {
+            ws.pause();
+          }
+        });
+        wavesurferRefs.current[index].play();
       }
-    });
+    }
   };
 
   // Export functions
@@ -445,18 +512,6 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     doc.save('transcript.pdf');
   };
 
-  useEffect(() => {
-    audioRefs.current = Array(transcript.length).fill(null);
-  }, [transcript.length]);
-
-  useEffect(() => {
-    audioRefs.current.forEach((audio, i) => {
-      if (audio && playingIndex !== i) {
-        audio.pause();
-      }
-    });
-  }, [playingIndex]);
-
   return (
     <div className="transcribe-container">
       <p className="upload-instructions">Upload or drag a WAV file to start transcription.</p>
@@ -543,15 +598,27 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
                       </td>
                       <td className="col-audio">
                         {entry.audio_chunk_url ? (
-                          <audio
-                            controls
-                            ref={(el) => (audioRefs.current[index] = el)}
-                            onPlay={() => handleAudioPlay(index)}
-                            aria-label={`Audio for chunk ${index + 1}`}
-                          >
-                            <source src={entry.audio_chunk_url} type="audio/wav" />
-                            Your browser does not support the audio element.
-                          </audio>
+                          <div className="audio-content">
+                            <div
+                              className="waveform"
+                              ref={waveformRefs.current[index]}
+                              style={{ width: '100%', height: '50px' }}
+                            ></div>
+                            <div className="audio-controls">
+                              <button
+                                className="play-button"
+                                onClick={() => handleTogglePlay(index)}
+                                aria-label={playingIndex === index ? 'Pause audio' : 'Play audio'}
+                              >
+                                <img
+                                  src={playingIndex === index ? '/images/pause.png' : '/images/play.png'}
+                                  alt={playingIndex === index ? 'Pause' : 'Play'}
+                                  className="play-pause-icon"
+                                  style={{ width: '24px', height: '24px' }}
+                                />
+                              </button>
+                            </div>
+                          </div>
                         ) : (
                           <p>No audio available</p>
                         )}
