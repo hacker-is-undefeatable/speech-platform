@@ -124,8 +124,6 @@
 }
 .logout-button:hover { background: rgba(255,255,255,0.12); }
 
-/* ========== keep the rest of your top-navbar styles below (unchanged) ========== */
-
 .navbar-container {
   display: flex;
   width: 100%;
@@ -151,7 +149,7 @@
   padding: 10px 15px;
   text-decoration: none;
   color: #ffffff;
-  font-family: 'Lato', sans-serif;
+  font-family: 'Arial', sans-serif;
   font-weight: 500;
   font-size: 1.1rem;
 }

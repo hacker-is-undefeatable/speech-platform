@@ -125,10 +125,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
 /* Table Styling */
 table {
   width: 100%;
