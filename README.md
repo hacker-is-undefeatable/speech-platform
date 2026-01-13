@@ -36,8 +36,7 @@ CantoSub is a startup project by HKUST Computer Science students dedicated to br
 ```bash
 cd backend
 npm install
-# Create .env file with your configuration
-# Required: DATABASE_URL, JWT_SECRET, STRIPE_KEY, etc.
+# Create backend/.env (see backend/.env.example)
 node app.js
 ```
 
@@ -45,6 +44,7 @@ node app.js
 ```bash
 cd stt_tts_service
 pip install flask openai-whisper TTS
+# Create stt_tts_service/.env (see stt_tts_service/.env.example)
 python app.py
 ```
 
@@ -52,6 +52,7 @@ python app.py
 ```bash
 cd frontend
 npm install
+# Create frontend/.env (see frontend/.env.example)
 npm start
 ```
 
@@ -74,21 +75,75 @@ cantosub/
 
 ## Environment Configuration
 
-Create `.env` files in both `backend/` and `frontend/` directories with the following:
+This repo expects environment variables in each service folder.
 
-**Backend `.env`:**
+Use the templates:
+- `backend/.env.example`
+- `frontend/.env.example`
+- `stt_tts_service/.env.example`
+
+Key variables:
+
+**backend/.env**
 ```
-DATABASE_URL=your_supabase_url
-JWT_SECRET=your_jwt_secret
-STRIPE_API_KEY=your_stripe_key
-STRIPE_WEBHOOK_SECRET=your_webhook_secret
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB
+JWT_SECRET=change-me
+PORT=4000
+CLIENT_URL=http://localhost:3000
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-**Frontend `.env`:**
+**frontend/.env** (Create React App requires `REACT_APP_` prefix)
 ```
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_FIREBASE_KEY=your_firebase_key
+REACT_APP_SUPABASE_URL=
+REACT_APP_SUPABASE_ANON_KEY=
+REACT_APP_STT_URL=http://localhost:5000
+REACT_APP_BACKEND_URL=http://localhost:4000
 ```
+
+**stt_tts_service/.env**
+```
+SUPABASE_URL=
+SUPABASE_KEY=
+HF_TOKEN=
+HOST=0.0.0.0
+PORT=5000
+```
+
+Important: never commit real keys. `.env` is gitignored.
+
+## How to Run (Local)
+
+Start all 3 services (3 terminals):
+
+**Terminal 1 (Backend)**
+```bash
+cd backend
+npm install
+npm start
+```
+
+**Terminal 2 (Python STT service)**
+```bash
+cd stt_tts_service
+pip install -r requirements.txt
+python app.py
+```
+
+**Terminal 3 (Frontend)**
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Default URLs:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:4000
+- STT service: http://localhost:5000
 
 ## Deployment
 

@@ -1,0 +1,10 @@
+flask
+flask-cors
+python-dotenv
+numpy
+librosa
+soundfile
+transformers
+torch
+pyannote.audio
+supabase

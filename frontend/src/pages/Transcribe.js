@@ -227,7 +227,8 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
       if (updateError) throw new Error('Failed to update user credits');
       if (typeof setCredit === 'function') setCredit(newCredits);
 
-      const response = await fetch('http://localhost:5000/transcribe', {
+      const sttBaseUrl = (process.env.REACT_APP_STT_URL || 'http://localhost:5000').replace(/\/$/, '');
+      const response = await fetch(`${sttBaseUrl}/transcribe`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
