@@ -6,6 +6,8 @@ import './Navbar.css';
 function Navbar({ isAuthenticated, setIsAuthenticated }) {
   const navigate = useNavigate();
   const [credits, setCredits] = useState(0);
+  const [walletBalance, setWalletBalance] = useState('0');
+  const [walletAddress, setWalletAddress] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState({
     platform: false,
     solutions: false,
@@ -15,6 +17,108 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
   });
 
   const [showNavbar, setShowNavbar] = useState(true);
+
+  const fetchWalletBalance = async (address) => {
+    if (window.ethereum && address) {
+      try {
+        const balanceHex = await window.ethereum.request({
+          method: 'eth_getBalance',
+          params: [address, 'latest'],
+        });
+        const balanceWei = BigInt(balanceHex);
+        const balanceEth = Number(balanceWei) / 1e18;
+        setWalletBalance(balanceEth.toFixed(4));
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    }
+  };
+
+  // Listen for account/chain changes in Navbar to keep balance/address updated
+  useEffect(() => {
+    if (window.ethereum) {
+        const handleAccountsChanged = (accounts) => {
+            if (accounts.length > 0) {
+                setWalletAddress(accounts[0].toLowerCase());
+                localStorage.setItem('walletAddress', accounts[0].toLowerCase());
+                fetchWalletBalance(accounts[0]);
+            } else {
+                setWalletAddress('');
+                localStorage.removeItem('walletAddress');
+            }
+        };
+        const handleChainChanged = () => {
+             // Reload is recommended for chain change, or re-fetch balance
+             window.location.reload(); 
+        };
+
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
+
+        return () => {
+            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+            window.ethereum.removeListener('chainChanged', handleChainChanged);
+        };
+    }
+  }, []);
+
+  // Persistence: Check localStorage on mount
+  useEffect(() => {
+    const storedAddress = localStorage.getItem('walletAddress');
+    if (storedAddress) {
+      // Improve: verify if still connected in provider
+      if (window.ethereum) {
+         window.ethereum.request({ method: 'eth_accounts' })
+          .then(accounts => {
+             if (accounts.length > 0 && accounts[0].toLowerCase() === storedAddress.toLowerCase()) {
+                 setWalletAddress(storedAddress);
+                 fetchWalletBalance(storedAddress);
+             } else {
+                 // Disconnected in metamask or switched accounts
+                 localStorage.removeItem('walletAddress');
+                 setWalletAddress('');
+             }
+          });
+      }
+    }
+  }, []);
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        // 1. Request access to the user's wallet
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const account = accounts[0];
+        
+        // 2. Request signature to verify ownership
+        const message = "Welcome to SonoCanto! Please sign this message to verify your wallet ownership.";
+        await window.ethereum.request({
+          method: 'personal_sign',
+          params: [message, account],
+        });
+
+        // 3. Only set the address if signing succeeds
+        setWalletAddress(account);
+        localStorage.setItem('walletAddress', account); // Persist
+        fetchWalletBalance(account);
+      } catch (error) {
+        console.error("Error connecting/signing with MetaMask", error);
+        setWalletAddress(''); // Check if we should clear it or user just rejected signature
+        localStorage.removeItem('walletAddress');
+      }
+    } else {
+      alert("MetaMask not detected. Please install it.");
+    }
+  };
+
+  const handleWalletClick = () => {
+      if (walletAddress) {
+          navigate('/app/wallet');
+      } else {
+          connectWallet();
+      }
+  };
+
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -116,10 +220,16 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
           </div>
 
           <div className="nav-section-right">
-            <div className="credits-pill" onClick={handleCreditsClick} role="button" tabIndex={0}>
-              <img src="/images/coin.png" alt="Credits" className="coin-sm" />
-              <span className="credits-text">{credits}</span>
-            </div>
+            {!walletAddress ? (
+              <button className="nav-pill" onClick={connectWallet} style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}>
+                Connect Wallet
+              </button>
+            ) : (
+              <div className="credits-pill" onClick={() => navigate('/app/wallet')} role="button" tabIndex={0}>
+                <img src="/images/coin.png" alt="Credits" className="coin-sm" />
+                <span className="credits-text">{walletBalance} ETH</span>
+              </div>
+            )}
             <button className="logout-pill" onClick={handleLogout}>Logout</button>
           </div>
         </div>
