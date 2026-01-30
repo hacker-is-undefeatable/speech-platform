@@ -211,7 +211,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                   </div>
                 )}
               </div>
-              <NavLink to="/pricing" className={({ isActive }) => (isActive ? 'active' : '')}>Pricing</NavLink>
             </div>
 
             <div className="navbar-actions">

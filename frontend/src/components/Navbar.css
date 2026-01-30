@@ -30,13 +30,27 @@
 }
 
 /* ======= TOP (public) navbar ======= */
+@keyframes gradientBg {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .navbar-top {
   width: 80%;
   display: flex;
   align-items: center;
   padding: 12px 30px;
   min-height: 70px;
-  background: rgba(10, 10, 10, 0.75);
+  background: linear-gradient(-45deg, #00ff66, #8645ff, #1b264f, #1a1a1a);  /* Tune Color*/
+  background-size: 400% 400%;
+  animation: gradientBg 15s ease infinite;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 100px;
