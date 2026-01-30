@@ -1,0 +1,31 @@
+/* Global App Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: 'Roboto', 'Lato', sans-serif;
+  /* Add padding to top of body so content doesn't start under the floating nav initially */
+  padding-top: 100px; 
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.content {
+  width: 100%;
+  min-height: 100vh;
+  /* Removed margin-left logic */
+}
+
+.content > div {
+  width: 100%;
+  min-height: 100vh;
+}

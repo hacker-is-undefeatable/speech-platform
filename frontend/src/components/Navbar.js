@@ -11,7 +11,27 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
     solutions: false,
     api: false,
     resources: false,
+    pricing: false,
   });
+
+  const [showNavbar, setShowNavbar] = useState(true);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setShowNavbar(false);
+      } else {
+        setShowNavbar(true);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,48 +87,48 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
   const toggleDropdown = (menu) => setIsDropdownOpen(prev => ({ ...prev, [menu]: !prev[menu] }));
 
   return (
-    <nav className={`navbar ${isAuthenticated ? 'navbar-left' : 'navbar-top'}`}>
+    <nav className={`navbar ${isAuthenticated ? 'navbar-app' : 'navbar-top'} ${showNavbar ? 'nav-visible' : 'nav-hidden'}`}>
       {isAuthenticated ? (
-        /* Sidebar layout for logged-in users */
-        <div className="sidebar-container">
-          <div className="sidebar-top">
+        /* Top app bar for logged-in users (formerly sidebar) */
+        <div className="navbar-app-container">
+          <div className="nav-section-left">
             <NavLink to="/" className="logo-link">
-              <img src="/images/home-icon.png" alt="Home" className="sidebar-logo-img" />
+              <span className="nav-text-logo">Home</span>
             </NavLink>
           </div>
 
-          <div className="sidebar-links">
-            <NavLink to="/app/transcribe" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          <div className="nav-section-center">
+            <NavLink to="/app/transcribe" className={({ isActive }) => (isActive ? 'nav-pill active' : 'nav-pill')}>
               <span className="nav-text">Transcribe</span>
             </NavLink>
 
-            <NavLink to="/app/files" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+            <NavLink to="/app/files" className={({ isActive }) => (isActive ? 'nav-pill active' : 'nav-pill')}>
               <span className="nav-text">History</span>
             </NavLink>
 
-            <NavLink to="/app/help" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+            <NavLink to="/app/help" className={({ isActive }) => (isActive ? 'nav-pill active' : 'nav-pill')}>
               <span className="nav-text">Support</span>
             </NavLink>
 
-            <NavLink to="/app/settings" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+            <NavLink to="/app/settings" className={({ isActive }) => (isActive ? 'nav-pill active' : 'nav-pill')}>
               <span className="nav-text">Settings</span>
             </NavLink>
           </div>
 
-          <div className="sidebar-bottom">
-            <div className="credits-box" onClick={handleCreditsClick} role="button" tabIndex={0}>
-              <img src="/images/coin.png" alt="Credits" className="coin" />
-              <span className="credits-display">{credits}</span>
+          <div className="nav-section-right">
+            <div className="credits-pill" onClick={handleCreditsClick} role="button" tabIndex={0}>
+              <img src="/images/coin.png" alt="Credits" className="coin-sm" />
+              <span className="credits-text">{credits}</span>
             </div>
-            <button className="logout-button" onClick={handleLogout}>Logout</button>
+            <button className="logout-pill" onClick={handleLogout}>Logout</button>
           </div>
         </div>
       ) : (
         /* Top navbar for public / unauthenticated users (kept mostly as your existing layout) */
         <div className="navbar-container">
           <div className="navbar-logo">
-            <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
-              <img src="/images/home-icon.png" alt="Home" className="navbar-logo-img" />
+            <NavLink to="/" className={({ isActive }) => (isActive ? 'active logo-text' : 'logo-text')}>
+              Home
             </NavLink>
           </div>
           <div className="navbar-content">
@@ -124,14 +144,14 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                 </button>
                 {isDropdownOpen.platform && (
                   <div className="dropdown-content">
-                    <div className="dropdown-item">📝 Text to Speech</div>
-                    <div className="dropdown-item">🎤 Speech to Text</div>
-                    <div className="dropdown-item">🔊 Voice Changer</div>
-                    <div className="dropdown-item">🎶 Text to Sound Effects</div>
-                    <div className="dropdown-item">👤 Voice Cloning</div>
-                    <div className="dropdown-item">🎙️ Voice Isolator</div>
-                    <div className="dropdown-item">🎨 Voice Design</div>
-                    <div className="dropdown-item">🎵 Music</div>
+                    <div className="dropdown-item">Text to Speech</div>
+                    <div className="dropdown-item">Speech to Text</div>
+                    <div className="dropdown-item">Voice Changer</div>
+                    <div className="dropdown-item">Text to Sound Effects</div>
+                    <div className="dropdown-item">Voice Cloning</div>
+                    <div className="dropdown-item">Voice Isolator</div>
+                    <div className="dropdown-item">Voice Design</div>
+                    <div className="dropdown-item">Music</div>
                   </div>
                 )}
               </div>
@@ -177,7 +197,20 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                   </div>
                 )}
               </div>
-
+              <div
+                className="dropdown"
+                onMouseEnter={() => toggleDropdown('pricing')}
+                onMouseLeave={() => toggleDropdown('pricing')}
+              >
+                <button className="dropdown-trigger">Pricing <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
+                {isDropdownOpen.pricing && (
+                  <div className="dropdown-content">
+                    <NavLink to="/pricing" className={({ isActive }) => (isActive ? 'active' : '')}>Compare Plans</NavLink>
+                    <NavLink to="/getting-started" className={({ isActive }) => (isActive ? 'active' : '')}>Enterprise</NavLink>
+                    <NavLink to="/getting-started" className={({ isActive }) => (isActive ? 'active' : '')}>Scale</NavLink>
+                  </div>
+                )}
+              </div>
               <NavLink to="/pricing" className={({ isActive }) => (isActive ? 'active' : '')}>Pricing</NavLink>
             </div>
 

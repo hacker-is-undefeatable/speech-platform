@@ -9,6 +9,8 @@
   width: 100%;
   overflow: auto;
   background: #000000;
+  padding: 0;
+  margin: 0;
 }
 
 .content-container {

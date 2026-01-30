@@ -285,12 +285,17 @@ export default function Login({ setIsAuthenticated }) {
           return;
         }
         if (data.user) {
-          const { error: profileError } = await supabase.from('user_profiles').insert({
-            id: data.user.id,
-            email: email,
-            display_name: `${firstName} ${lastName}`.trim(),
-            credits: 30,
-          });
+          // Prefer DB trigger to create public.users + user_profiles on signup.
+          // Upsert here is a safe fallback and avoids duplicate-key failures.
+          const { error: profileError } = await supabase.from('user_profiles').upsert(
+            {
+              id: data.user.id,
+              email: email,
+              display_name: `${firstName} ${lastName}`.trim(),
+              credits: 30,
+            },
+            { onConflict: 'id' }
+          );
           if (!isMounted) return;
           if (profileError) {
             setNotifications([{ type: 'danger', message: `${t.failure}: Failed to create profile.` }]);
