@@ -298,7 +298,8 @@ export default function Login({ setIsAuthenticated }) {
           );
           if (!isMounted) return;
           if (profileError) {
-            setNotifications([{ type: 'danger', message: `${t.failure}: Failed to create profile.` }]);
+            console.error('Profile creation error:', profileError);
+            setNotifications([{ type: 'danger', message: `${t.failure}: Failed to create profile. ${profileError.message || ''}` }]);
             return;
           }
           if (data.session) {

@@ -15,7 +15,6 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
   const [numSpeakers, setNumSpeakers] = useState(2);
   const [hasTranscribed, setHasTranscribed] = useState(false);
   const [playingIndex, setPlayingIndex] = useState(null);
-  const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
   const navigate = useNavigate();
   const waveformRefs = useRef([]);
   const wavesurferRefs = useRef([]);
@@ -121,10 +120,10 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
           setPlayingIndex(index);
         });
         wavesurferRefs.current[index].on('pause', () => {
-          if (playingIndex === index) setPlayingIndex(null);
+          setPlayingIndex((prev) => (prev === index ? null : prev));
         });
         wavesurferRefs.current[index].on('finish', () => {
-          if (playingIndex === index) setPlayingIndex(null);
+          setPlayingIndex((prev) => (prev === index ? null : prev));
         });
         wavesurferRefs.current[index].on('error', (error) => {
           console.error(`WaveSurfer error at index ${index}:`, error);
@@ -200,40 +199,11 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
           resolve();
         };
       });
-      const durationSec = audio.duration;
-      const minutes = Math.ceil(durationSec / 60);
-
-      const { data: userData, error: userError } = await supabase
-        .from('user_profiles')
-        .select('credits')
-        .eq('id', session.user.id)
-        .single();
-
-      if (userError) throw new Error('Failed to fetch user credits');
-
-      const currentCredits = userData.credits || 0;
-
-      if (currentCredits < minutes) {
-        setShowInsufficientCredits(true);
-        setIsLoading(false);
-        return;
-      }
-
-      const newCredits = currentCredits - minutes;
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ credits: newCredits })
-        .eq('id', session.user.id);
-
-      if (updateError) throw new Error('Failed to update user credits');
-      if (typeof setCredit === 'function') setCredit(newCredits);
-
+      
       const sttBaseUrl = (process.env.REACT_APP_STT_URL || 'http://localhost:5000').replace(/\/$/, '');
       const response = await fetch(`${sttBaseUrl}/transcribe`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        // Headers removed as auth is no longer required on backend
         body: formData,
       });
 
@@ -254,26 +224,44 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
       } else {
         // Use structured chunks from backend if available (supports Web3 flow)
         if (data.chunks) {
-            const updatedTranscript = data.chunks.map((chunk) => ({
-                chunk_index: chunk.chunk_index,
-                timestamp: `${parseFloat(chunk.start_time).toFixed(2)}s - ${parseFloat(chunk.end_time).toFixed(2)}s`,
-                start_time: parseFloat(chunk.start_time).toFixed(2),
-                end_time: parseFloat(chunk.end_time).toFixed(2),
-                speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
-                speakerId: chunk.speaker,
-                text: chunk.transcription_text || '',
-                audio_chunk_url: chunk.audio_chunk_url,
-            }));
+            const updatedTranscript = data.chunks.map((chunk) => {
+                // Ensure audio URL is absolute
+                let audioUrl = chunk.audio_chunk_url;
+                if (audioUrl && audioUrl.startsWith('/')) {
+                    audioUrl = `${sttBaseUrl}${audioUrl}`;
+                }
+                
+                return {
+                    chunk_index: chunk.chunk_index,
+                    timestamp: `${parseFloat(chunk.start_time).toFixed(2)}s - ${parseFloat(chunk.end_time).toFixed(2)}s`,
+                    start_time: parseFloat(chunk.start_time).toFixed(2),
+                    end_time: parseFloat(chunk.end_time).toFixed(2),
+                    speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
+                    speakerId: chunk.speaker,
+                    text: chunk.transcription_text || '',
+                    audio_chunk_url: audioUrl,
+                };
+            });
             setTranscript(updatedTranscript);
             setHasTranscribed(updatedTranscript.length > 0);
+            
+            // Automatically trigger secure save flow
+            await saveToBlockchain(updatedTranscript);
         } else {
             // Fallback for backward compatibility
             const parsedTranscript = parseTranscript(data.transcript);
-            setTranscript(parsedTranscript.filter(entry => entry.text && entry.text.trim()));
-            setHasTranscribed(parsedTranscript.filter(entry => entry.text && entry.text.trim()).length > 0);
+            const filtered = parsedTranscript.filter(entry => entry.text && entry.text.trim());
+            setTranscript(filtered);
+            if (filtered.length > 0) {
+                 await saveToBlockchain(filtered);
+            }
+            setHasTranscribed(filtered.length > 0);
         }
         
-        if (typeof setCredit === 'function') setCredit(newCredits);
+        if (typeof setCredit === 'function') {
+           // Credit update not needed anymore, keeping logic or removing it depends on if you want to update UI to show "Unlimited" or similar.
+           // For now, removing the credit deduction update.
+        }
       }
     } catch (error) {
       console.error('Error sending audio:', error);
@@ -495,7 +483,200 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     doc.save('transcript.pdf');
   };
 
-  const handleSaveToChain = async () => {
+  // IPFS & Encryption Helpers
+  const uploadToIPFS = async (blob) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', blob);
+        // Default local IPFS API port
+        const response = await fetch('http://127.0.0.1:5001/api/v0/add', {
+            method: 'POST',
+            body: formData,
+        });
+        if (!response.ok) throw new Error('IPFS upload failed. Is your local node running?');
+        const data = await response.json();
+        return data.Hash;
+    } catch (e) {
+        console.error("IPFS Upload Error:", e);
+        throw e;
+    }
+  };
+
+  const deriveKey = async (signature) => {
+      const enc = new TextEncoder();
+      const keyMaterial = await window.crypto.subtle.importKey(
+          "raw",
+          enc.encode(signature),
+          { name: "PBKDF2" },
+          false,
+          ["deriveKey"]
+      );
+      return window.crypto.subtle.deriveKey(
+          {
+              name: "PBKDF2",
+              salt: enc.encode("SonoCanto-Salt"),
+              iterations: 100000,
+              hash: "SHA-256",
+          },
+          keyMaterial,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["encrypt", "decrypt"]
+      );
+  };
+
+  const encryptAudio = async (blob, key) => {
+      const buffer = await blob.arrayBuffer();
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      const encryptedContent = await window.crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: iv },
+          key,
+          buffer
+      );
+      // Prepend IV to the encrypted data for decryption later
+      const resultBuffer = new Uint8Array(iv.length + encryptedContent.byteLength);
+      resultBuffer.set(iv);
+      resultBuffer.set(new Uint8Array(encryptedContent), iv.length);
+      return new Blob([resultBuffer]);
+  };
+
+  const decryptAudio = async (encryptedBlob, key) => {
+      const buffer = await encryptedBlob.arrayBuffer();
+      // Extract IV (first 12 bytes)
+      const iv = buffer.slice(0, 12);
+      // Extract data (rest)
+      const data = buffer.slice(12);
+      
+      try {
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(iv) },
+            key,
+            data
+        );
+        return new Blob([decryptedBuffer], { type: 'audio/wav' });
+      } catch (e) {
+        console.error("Decryption failed:", e);
+        throw new Error("Failed to decrypt audio. Wrong account or signature?");
+      }
+  };
+
+  const handleLoadFromChain = async () => {
+    try {
+        if (!window.ethereum) {
+            alert('MetaMask is not installed!');
+            return;
+        }
+
+        setIsLoading(true); // Re-use loading state
+
+        // Request account access
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        
+        const CONTRACT_ADDRESS = "0xcD7faf4C2c2DF26C80490AF9Dc3CeFebA184AD28"; 
+        
+        // Define ABI with the getter
+        const ABI = [
+          "function getUserSessions() public view returns (tuple(string sessionId, string userId, uint256 timestamp, tuple(uint256 startTime, uint256 endTime, string speaker, string text, string audioUrl)[] chunks)[])"
+        ];
+        
+        let contract;
+        try {
+           contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+        } catch(e) {
+           console.error("Contract setup error", e);
+           alert("Failed to connect to contract.");
+           setIsLoading(false);
+           return;
+        }
+
+        // Fetch sessions
+        const sessions = await contract.getUserSessions();
+        if (!sessions || sessions.length === 0) {
+            alert("No sessions found for this address.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Get the latest session
+        const latestSession = sessions[sessions.length - 1];
+        console.log("Loading session:", latestSession.sessionId);
+
+        // Security Check: Prompt for signature to derive decryption key
+        // Note: In a real app, you might want to check IF the audio is encrypted before asking, 
+        // but here we assume all chain-saved audio is encrypted as per new flow.
+        let key;
+        try {
+            const signature = await signer.signMessage("Sign this message to generate your encryption key for SonoCanto audio files.");
+            key = await deriveKey(signature);
+        } catch (err) {
+            alert("Signature denied. Cannot decrypt audio.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Process chunks
+        const loadedTranscript = [];
+        const rawChunks = latestSession.chunks; // This is a specific structure from Ethers
+
+        for (let i = 0; i < rawChunks.length; i++) {
+            const chunk = rawChunks[i];
+            
+            // Convert timestamps (stored as * 100)
+            const startStr = (Number(chunk.startTime) / 100).toFixed(2);
+            const endStr = (Number(chunk.endTime) / 100).toFixed(2);
+            
+            let audioBlobUrl = null;
+            
+            // Handle IPFS URL
+            if (chunk.audioUrl && chunk.audioUrl.startsWith('ipfs://')) {
+                const cid = chunk.audioUrl.replace('ipfs://', '');
+                const gatewayUrl = `http://127.0.0.1:8080/ipfs/${cid}`;
+                
+                try {
+                    const resp = await fetch(gatewayUrl);
+                    if (!resp.ok) throw new Error("IPFS Fetch failed");
+                    const encryptedBlob = await resp.blob();
+                    
+                    const decryptedBlob = await decryptAudio(encryptedBlob, key);
+                    audioBlobUrl = URL.createObjectURL(decryptedBlob);
+                } catch (e) {
+                    console.error(`Failed to load/decrypt chunk ${i}:`, e);
+                }
+            } else if (chunk.audioUrl) {
+                // Legacy or direct URL
+                audioBlobUrl = chunk.audioUrl;
+            }
+
+            loadedTranscript.push({
+                chunk_index: i,
+                timestamp: `${startStr}s - ${endStr}s`,
+                start_time: startStr,
+                end_time: endStr,
+                speaker: chunk.speaker,
+                speakerId: chunk.speaker, // Mapping might be loose here
+                text: chunk.text,
+                audio_chunk_url: audioBlobUrl
+            });
+        }
+
+        setTranscript(loadedTranscript);
+        setHasTranscribed(true);
+        alert("Session loaded and decrypted from Blockchain/IPFS!");
+
+    } catch (e) {
+        console.error("Load error:", e);
+        alert("Failed to load session details: " + e.message);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const saveToBlockchain = async (transcriptData) => {
+      // Use provided data or fallback to state (unlikely in auto-flow)
+      const dataToSave = transcriptData || transcript;
+      
       try {
           if (!window.ethereum) {
               alert('MetaMask is not installed!');
@@ -506,33 +687,68 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
+
+          // 1. Sign message to derive encryption key
+          const signature = await signer.signMessage("Sign this message to generate your encryption key for SonoCanto audio files.");
+          const key = await deriveKey(signature);
           
-          const CONTRACT_ADDRESS = "0xYourContractAddressHere"; // Replace with deployed contract address on Sepolia
+          const CONTRACT_ADDRESS = "0xcD7faf4C2c2DF26C80490AF9Dc3CeFebA184AD28"; // Replace with deployed contract address on Sepolia
           // Minimal ABI for the saveSession function
           const ABI = [
             "function saveSession(string memory _sessionId, string memory _userId, tuple(uint256 startTime, uint256 endTime, string speaker, string text, string audioUrl)[] memory _chunks) public"
           ];
+          
+          // Connect to the contract
+          let contract;
+          try {
+             contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+          } catch(e) {
+             console.error("Contract mismatch", e);
+             alert("Contract setup failed. Check console.");
+             return;
+          }
 
-          const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-          const { data: { session } } = await supabase.auth.getSession();
-          const userId = session?.user?.id || "anon";
+          // Use wallet address as user ID
+          const userId = await signer.getAddress();
           const sessionId = `session_${Date.now()}`;
 
-          // Format chunks for contract
-          // Multiply timestamps by 100 to store as integers (2 decimal places)
-          const formattedChunks = transcript.map(t => ({
-              startTime: Math.floor(parseFloat(t.start_time) * 100),
-              endTime: Math.floor(parseFloat(t.end_time) * 100),
-              speaker: t.speaker,
-              text: t.text,
-              audioUrl: t.audio_chunk_url || ""
-          }));
+          // Format chunks for contract with IPFS processing
+          const formattedChunks = [];
+          
+          for (const t of dataToSave) {
+              let ipfsHash = "";
+              if (t.audio_chunk_url) {
+                  try {
+                      // Fetch the actual audio data
+                      const audioResp = await fetch(t.audio_chunk_url);
+                      const audioBlob = await audioResp.blob();
+                      
+                      // Encrypt
+                      const encryptedBlob = await encryptAudio(audioBlob, key);
+                      
+                      // Upload to IPFS
+                      const cid = await uploadToIPFS(encryptedBlob);
+                      ipfsHash = `ipfs://${cid}`;
+                  } catch (err) {
+                      console.error("Failed to process chunk for IPFS:", err);
+                      // Fallback or empty if failed
+                      ipfsHash = "error_uploading";
+                  }
+              }
+
+              formattedChunks.push({
+                  startTime: Math.floor(parseFloat(t.start_time) * 100),
+                  endTime: Math.floor(parseFloat(t.end_time) * 100),
+                  speaker: t.speaker,
+                  text: t.text,
+                  audioUrl: ipfsHash // Store IPFS URI instead of http URL
+              });
+          }
 
           const tx = await contract.saveSession(sessionId, userId, formattedChunks);
           alert(`Transaction sent! Hash: ${tx.hash}`);
           await tx.wait();
-          alert('Transcription saved to blockchain successfully!');
+          alert('Transcription and encrypted audio saved to blockchain/IPFS successfully!');
 
       } catch (err) {
           console.error("Blockchain save error:", err);
@@ -658,11 +874,11 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
             </div>
             <div className="flex space-x-2 mt-4">
               <button
-                className="save-btn bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                onClick={handleSaveToChain}
-                aria-label="Save transcription to Blockchain"
+                className="load-chain-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={handleLoadFromChain}
+                aria-label="Load latest from Blockchain"
               >
-                Save to Blockchain
+                Load Latest from Chain
               </button>
               <select
                 className="export-select bg-gray-200 text-black px-4 py-2 rounded"
@@ -683,28 +899,6 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
                 <option value="docx">Word (DOCX)</option>
                 <option value="pdf">PDF</option>
               </select>
-            </div>
-          </div>
-        )}
-        {showInsufficientCredits && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h2 className="text-lg font-bold mb-4">Insufficient Credits</h2>
-              <p className="mb-4">You don't have enough credits to transcribe this audio. Please top up your account.</p>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={() => navigate('/subscription')}
-                aria-label="Go to subscription page"
-              >
-                Top Up Account
-              </button>
-              <button
-                className="ml-4 bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
-                onClick={() => setShowInsufficientCredits(false)}
-                aria-label="Close popup"
-              >
-                Close
-              </button>
             </div>
           </div>
         )}

@@ -12,6 +12,13 @@ require('dotenv').config();
     // Initialize Supabase Client
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase env vars missing. URL:', supabaseUrl, 'Key present:', !!supabaseKey);
+    } else {
+      console.log('Supabase Client Initialized. URL:', supabaseUrl);
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Register Endpoint

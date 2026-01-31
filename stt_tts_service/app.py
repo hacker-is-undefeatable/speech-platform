@@ -9,30 +9,27 @@ import soundfile as sf
 import os
 import tempfile
 import uuid
-from supabase import create_client, Client
+# from supabase import create_client, Client
 import shutil
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Flask app
-app = Flask(__name__)
-CORS(app, resources={r"/transcribe": {"origins": "*"}}, support_credentials=True)  # Allow all origins for testing
+app = Flask(__name__, static_folder='static')
+CORS(app, resources={r"/*": {"origins": "*"}}, support_credentials=True)
 
-# Load secrets from environment variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-HF_TOKEN = os.environ.get("HF_TOKEN")
-
-if not SUPABASE_URL or not SUPABASE_KEY or not HF_TOKEN:
-    raise RuntimeError("Missing required environment variables for credentials.")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Ensure static directory exists for temporary audio serving
+# Use absolute path to avoid issues with CWD or spaces
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_AUDIO_DIR = os.path.join(BASE_DIR, 'static', 'audio_chunks')
+if not os.path.exists(STATIC_AUDIO_DIR):
+    os.makedirs(STATIC_AUDIO_DIR)
 
 # Transcription model setup
 torch.set_num_threads(1)
-model_vad, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad')
-(get_speech_timestamps, _, read_audio, _, _) = utils
+model_vad, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', trust_repo=True)
+(get_speech_timestamps, get_number_ts, read_audio, _, process_chunk) = utils
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 processor = AutoProcessor.from_pretrained("simonl0909/whisper-large-v2-cantonese")
 model = AutoModelForSpeechSeq2Seq.from_pretrained("simonl0909/whisper-large-v2-cantonese").to(device)
@@ -67,7 +64,7 @@ def apply_vad_to_segment(chunk, chunk_start, temp_dir, sample_rate=16000):
 def get_speaker_segments(audio_path, sample_rate=16000, num_speakers=None):
     try:
         audio, sr = librosa.load(audio_path, sr=sample_rate)
-        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=HF_TOKEN)
+        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
         pipeline.to(device)
         if num_speakers:
             diarization = pipeline(audio_path, num_speakers=num_speakers)
@@ -92,22 +89,9 @@ def get_speaker_segments(audio_path, sample_rate=16000, num_speakers=None):
         print(f"Diarization error at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
         raise
 
-# Function to upload audio chunk to Supabase Storage and return full URL
+# Function to upload audio chunk (REMOVED SUPABASE)
 def upload_audio_to_supabase(session_id, chunk, chunk_index, sample_rate):
-    temp_file = os.path.join(tempfile.gettempdir(), f"chunk_{chunk_index}.wav")
-    sf.write(temp_file, chunk, sample_rate)
-    file_name = f"sessions/{session_id}/chunks/{chunk_index}.wav"
-    try:
-        with open(temp_file, 'rb') as f:
-            response = supabase.storage.from_('audiofiles').upload(file_name, f, {'contentType': 'audio/wav'})
-        os.remove(temp_file)
-        # Construct full public URL
-        full_url = f"{SUPABASE_URL}/storage/v1/object/public/audiofiles/{file_name}"
-        return full_url
-    except Exception as e:
-        print(f"Upload error for chunk {chunk_index} at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
-        os.remove(temp_file)
-        raise
+    return None
 
 # Transcription endpoint
 @app.route('/transcribe', methods=['POST'])
@@ -119,38 +103,15 @@ def transcribe():
         if 'audio' not in request.files:
             return jsonify({'error': 'No audio file provided'}), 400
         audio_file = request.files['audio']
+        if not audio_file.filename:
+            return jsonify({'error': 'No filename provided'}), 400
         print(f"Audio file received at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {audio_file.filename}")
         if not audio_file.filename.endswith('.wav'):
             return jsonify({'error': 'Only WAV files are supported'}), 400
 
-        user_id = None
-        auth_header = request.headers.get('Authorization')
-        if auth_header:
-            try:
-                token = auth_header.split("Bearer ")[1]
-                user = supabase.auth.get_user(token)
-                if user and user.user:
-                    user_id = user.user.id
-                    print(f"Authenticated user ID at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {user_id}")
-                else:
-                    print(f"Invalid user data from token at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}")
-            except Exception as e:
-                print(f"Token validation error at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
-                return jsonify({'error': 'Invalid or expired token'}), 401
-
-        print(f"User ID at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {user_id}")
         temp_dir = tempfile.mkdtemp()
         audio_path = os.path.join(temp_dir, audio_file.filename)
         audio_file.save(audio_path)
-
-        # session_data = {
-        #     'session_id': session_id,
-        #     'user_id': user_id,
-        #     'title': audio_file.filename,
-        #     'status': 'processing'
-        # }
-        # print(f"Inserting session data at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {session_data}")
-        # supabase.table('transcription_sessions').insert(session_data).execute()
 
         sample_rate = 16000
         num_speakers = request.form.get('num_speakers', type=int)
@@ -165,7 +126,7 @@ def transcribe():
             duration = segment['end'] - segment['start']
             if duration > 30:
                 print(f"Segment {segment['start']:.2f}s to {segment['end']:.2f}s exceeds 30s, applying VAD")
-                sub_segments = apply_vad_to_segment(segment['chunk'], sr, segment['start'], temp_dir, sample_rate)
+                sub_segments = apply_vad_to_segment(segment['chunk'], segment['start'], temp_dir, sample_rate=sample_rate)
                 for sub_segment in sub_segments:
                     sub_segment['speaker'] = segment['speaker']  # Inherit speaker from parent segment
                 final_segments.extend(sub_segments)
@@ -173,20 +134,37 @@ def transcribe():
                 final_segments.append(segment)
 
         transcriptions = []
-        chunks_data = [] # Store structural data for return
+        chunks_data = [] 
         for i, segment in enumerate(final_segments):
             try:
                 chunk = segment['chunk']
                 start = segment['start']
                 end = segment['end']
                 speaker = segment['speaker']
-
-                # Upload chunk to Supabase Storage (keep this as we need the URL)
+                
+                # Save chunk locally to serve to frontend for IPFS upload
+                chunk_filename = f"{session_id}_chunk_{i}.wav"
+                local_chunk_path = os.path.join(STATIC_AUDIO_DIR, chunk_filename)
+                
+                # Ensure data is contiguous and float32 (libsndfile preference)
+                if not isinstance(chunk, np.ndarray):
+                    chunk = np.array(chunk)
+                if not chunk.flags['C_CONTIGUOUS']:
+                    chunk = np.ascontiguousarray(chunk)
+                
                 try:
-                    chunk_path = upload_audio_to_supabase(session_id, chunk, i, sample_rate)
-                except Exception as e:
-                    print(f"Upload failed for chunk {i} at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
-                    continue
+                    sf.write(local_chunk_path, chunk, sr)
+                except Exception as write_err:
+                    print(f"sf.write failed: {write_err}. Trying alternate path resolution.")
+                    # Fallback or retry?
+                    # On Windows, sometimes absolute paths with spaces act up in some libraries.
+                    # But Python usually handles it.
+                    raise write_err
+                
+                # Construct URL (assuming basic localhost setup or relative path)
+                # Frontend will interpret this relative to its knowledge or we send full path if we know host
+                # Using relative path "/static/audio_chunks/..." which frontend can resolve against backend URL
+                chunk_path = f"/static/audio_chunks/{chunk_filename}"
 
                 # Attempt transcription
                 try:
@@ -248,4 +226,5 @@ if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', '5000'))
     debug = os.environ.get('FLASK_DEBUG', '1') == '1'
+    # Ensure raw static file serving is enabled for dev
     app.run(host=host, port=port, debug=debug)
