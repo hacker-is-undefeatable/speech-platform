@@ -1,7 +1,7 @@
 require('dotenv').config();
     const express = require('express');
     const cors = require('cors');
-    const { Pool } = require('pg');
+    const { createClient } = require('@supabase/supabase-js');
     const bcrypt = require('bcrypt');
     const jwt = require('jsonwebtoken');
 
@@ -9,21 +9,37 @@ require('dotenv').config();
     app.use(cors());
     app.use(express.json());
 
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    // Initialize Supabase Client
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Register Endpoint
     app.post('/api/auth/register', async (req, res) => {
       const { lastName, firstName, email, password } = req.body;
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await pool.query(
-          'INSERT INTO users (last_name, first_name, email, password_hash, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
-          [lastName, firstName, email, hashedPassword]
-        );
-        res.status(201).json({ message: 'User registered successfully', userId: result.rows[0].id });
+        
+        // Insert into custom 'users' table
+        const { data, error } = await supabase
+          .from('users')
+          .insert([
+            { 
+              last_name: lastName, 
+              first_name: firstName, 
+              email: email, 
+              password_hash: hashedPassword 
+            }
+          ])
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        
+        res.status(201).json({ message: 'User registered successfully', userId: data.id });
       } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Registration failed' });
+        res.status(500).json({ error: 'Registration failed', details: err.message });
       }
     });
 
@@ -31,10 +47,14 @@ require('dotenv').config();
     app.post('/api/auth/login', async (req, res) => {
       const { email, password } = req.body;
       try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length === 0) return res.status(400).json({ error: 'User not found' });
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
 
-        const user = result.rows[0];
+        if (error || !user) return res.status(400).json({ error: 'User not found' });
+
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
@@ -42,7 +62,7 @@ require('dotenv').config();
         res.json({ token });
       } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Login failed' });
+        res.status(500).json({ error: 'Login failed', details: err.message });
       }
     });
 
@@ -63,9 +83,5 @@ require('dotenv').config();
       res.json({ message: 'Welcome to the Home Page', user: req.user });
     });
 
-    const PORT = 4000;
-    pool.connect((err) => {
-      if (err) console.error('Database connection error:', err);
-      else console.log('Connected to database');
-    });
+    const PORT = process.env.PORT || 4000;
     app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
