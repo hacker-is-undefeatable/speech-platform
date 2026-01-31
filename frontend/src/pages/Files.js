@@ -1,44 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from './supabaseClient'; 
+import { ethers } from 'ethers';
 import './Files.css';
 
 function Files({ isAuthenticated, setIsAuthenticated }) {
   const [sessions, setSessions] = useState([]);
-  const [transcripts, setTranscripts] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Fetch all transcription sessions for the user
   useEffect(() => {
-    const loadSessions = async () => {
+    const loadSessionsFromChain = async () => {
       setIsLoading(true);
       setError('');
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setError('User not authenticated');
-          setIsAuthenticated(false);
-          navigate('/login');
-          return;
+        if (!window.ethereum) {
+           setError("MetaMask not installed");
+           return;
         }
 
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('transcription_sessions')
-          .select('session_id, created_at')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
 
-        if (sessionError) {
-          throw new Error('Error loading sessions: ' + sessionError.message);
-        }
+        const CONTRACT_ADDRESS = "0xYourContractAddressHere"; // Replaced with deployed contract address
+        // Note: The user must update this address in both Transcribe.js and Files.js
+        const ABI = [
+            "struct Chunk { uint256 startTime; uint256 endTime; string speaker; string text; string audioUrl; }",
+            "struct Session { string sessionId; string userId; uint256 timestamp; Chunk[] chunks; }",
+            "function getUserSessions() public view returns (Session[] memory)"
+        ];
 
-        setSessions(sessionData || []);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+        const userSessions = await contract.getUserSessions();
+        
+        // userSessions is a Proxy array (Result). We need to format it.
+        const formattedSessions = userSessions.map(s => ({
+            session_id: s.sessionId,
+            created_at: new Date(Number(s.timestamp) * 1000).toLocaleString(),
+            chunks: s.chunks.map(c => ({
+                start_time: Number(c.startTime) / 100,
+                end_time: Number(c.endTime) / 100,
+                speaker: c.speaker,
+                text: c.text,
+                audioUrl: c.audioUrl
+            }))
+        }));
+
+        // Sort by date desc (if not already)
+        formattedSessions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setSessions(formattedSessions);
+
       } catch (error) {
-        console.error('Error fetching sessions:', error);
-        setError(error.message);
+        console.error('Error fetching sessions from blockchain:', error);
+        setError("Failed to load sessions from blockchain. Ensure you are on Sepolia and referring to the correct contract address.");
         setSessions([]);
       } finally {
         setIsLoading(false);
@@ -46,65 +62,30 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
     };
 
     if (isAuthenticated) {
-      loadSessions();
+      loadSessionsFromChain();
     }
-  }, [isAuthenticated, setIsAuthenticated, navigate]);
+  }, [isAuthenticated, navigate]);
 
-  // Fetch transcription chunks for a specific session
-  const loadTranscriptionChunks = async (sessionId) => {
-    try {
-      const { data: chunks, error: chunkError } = await supabase
-        .from('transcription_chunks')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('chunk_index', { ascending: true });
-
-      if (chunkError) {
-        throw new Error('Error loading chunks: ' + chunkError.message);
-      }
-
-      const formattedChunks = chunks.map((chunk) => ({
-        chunk_index: chunk.chunk_index,
-        timestamp: `${chunk.start_time}s - ${chunk.end_time}s`,
-        start_time: chunk.start_time,
-        end_time: chunk.end_time,
-        speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
-        speakerId: chunk.speaker,
-        text: chunk.transcription_text || '',
-        audio_chunk_url: chunk.audio_chunk_url,
-      }));
-
-      setTranscripts((prev) => ({
-        ...prev,
-        [sessionId]: formattedChunks,
-      }));
-    } catch (error) {
-      console.error('Error fetching chunks:', error);
-      setError(error.message);
-    }
-  };
-
-  // Toggle visibility of transcription details for a session
+  // Toggle details (local state management since we have all data)
+  const [expandedSessions, setExpandedSessions] = useState({});
   const toggleSessionDetails = (sessionId) => {
-    if (!transcripts[sessionId]) {
-      loadTranscriptionChunks(sessionId);
-    } else {
-      setTranscripts((prev) => ({
-        ...prev,
-        [sessionId]: null,
+      setExpandedSessions(prev => ({
+          ...prev,
+          [sessionId]: !prev[sessionId]
       }));
-    }
   };
 
   return (
     <div className="files-container">
-      <h1>Transcription History</h1>
-      <p>View your previous transcription sessions below.</p>
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      <h1>Transcription History (Blockchain)</h1>
+      <p>View your previous transcription sessions stored on Sepolia.</p>
+      
+      {error && <p className="error-message">{error}</p>}
+      
       {isLoading ? (
         <p>Loading sessions...</p>
       ) : sessions.length === 0 ? (
-        <p>No transcription sessions found.</p>
+        <p>No transcription sessions found on blockchain.</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
@@ -122,15 +103,15 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
                     {session.session_id}
                   </td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                    {new Date(session.created_at).toLocaleString()}
+                    {session.created_at}
                   </td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>
                     <button onClick={() => toggleSessionDetails(session.session_id)}>
-                      {transcripts[session.session_id] ? 'Hide Details' : 'Show Details'}
+                      {expandedSessions[session.session_id] ? 'Hide Details' : 'Show Details'}
                     </button>
                   </td>
                 </tr>
-                {transcripts[session.session_id] && (
+                {expandedSessions[session.session_id] && (
                   <tr>
                     <td colSpan="3" style={{ padding: '0' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '10px 0' }}>
@@ -143,10 +124,10 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
                           </tr>
                         </thead>
                         <tbody>
-                          {transcripts[session.session_id].map((entry, index) => (
+                          {session.chunks.map((entry, index) => (
                             <tr key={index}>
                               <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                                {entry.timestamp}
+                                {entry.start_time.toFixed(2)}s - {entry.end_time.toFixed(2)}s
                               </td>
                               <td style={{ border: '1px solid #ccc', padding: '8px' }}>
                                 {entry.speaker}
@@ -155,13 +136,12 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
                                 {entry.text}
                               </td>
                               <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                                {entry.audio_chunk_url ? (
-                                  <audio controls>
-                                    <source src={entry.audio_chunk_url} type="audio/wav" />
-                                    Your browser does not support the audio element.
+                                {entry.audioUrl ? (
+                                  <audio controls style={{height: '30px'}}>
+                                    <source src={entry.audioUrl} type="audio/wav" />
                                   </audio>
                                 ) : (
-                                  <p>No audio available</p>
+                                  <p>No audio</p>
                                 )}
                               </td>
                             </tr>

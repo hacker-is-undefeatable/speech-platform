@@ -113,7 +113,7 @@ def upload_audio_to_supabase(session_id, chunk, chunk_index, sample_rate):
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
     from datetime import datetime
-    session_id = None
+    session_id = str(uuid.uuid4())
     try:
         print(f"Received files at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {request.files}")
         if 'audio' not in request.files:
@@ -143,15 +143,14 @@ def transcribe():
         audio_path = os.path.join(temp_dir, audio_file.filename)
         audio_file.save(audio_path)
 
-        session_id = str(uuid.uuid4())
-        session_data = {
-            'session_id': session_id,
-            'user_id': user_id,
-            'title': audio_file.filename,
-            'status': 'processing'
-        }
-        print(f"Inserting session data at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {session_data}")
-        supabase.table('transcription_sessions').insert(session_data).execute()
+        # session_data = {
+        #     'session_id': session_id,
+        #     'user_id': user_id,
+        #     'title': audio_file.filename,
+        #     'status': 'processing'
+        # }
+        # print(f"Inserting session data at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {session_data}")
+        # supabase.table('transcription_sessions').insert(session_data).execute()
 
         sample_rate = 16000
         num_speakers = request.form.get('num_speakers', type=int)
@@ -174,6 +173,7 @@ def transcribe():
                 final_segments.append(segment)
 
         transcriptions = []
+        chunks_data = [] # Store structural data for return
         for i, segment in enumerate(final_segments):
             try:
                 chunk = segment['chunk']
@@ -181,24 +181,12 @@ def transcribe():
                 end = segment['end']
                 speaker = segment['speaker']
 
-                # Upload chunk to Supabase and save to database regardless of transcription success
+                # Upload chunk to Supabase Storage (keep this as we need the URL)
                 try:
                     chunk_path = upload_audio_to_supabase(session_id, chunk, i, sample_rate)
-                    print(chunk_path)
-                    chunk_data = {
-                        'chunk_id': str(uuid.uuid4()),
-                        'session_id': session_id,
-                        'chunk_index': i,
-                        'transcription_text': None,  # Initialize as None, update if transcription succeeds
-                        'start_time': start,
-                        'end_time': end,
-                        'speaker': speaker,
-                        'audio_chunk_url': chunk_path  # Store full URL
-                    }
-                    supabase.table('transcription_chunks').insert(chunk_data).execute()
                 except Exception as e:
                     print(f"Upload failed for chunk {i} at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
-                    continue  # Skip to next segment if upload fails
+                    continue
 
                 # Attempt transcription
                 try:
@@ -209,10 +197,15 @@ def transcribe():
                     transcription = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 
                     if transcription.strip():
-                        # Update transcription_text in the database
-                        supabase.table('transcription_chunks').update({
-                            'transcription_text': transcription
-                        }).eq('session_id', session_id).eq('chunk_index', i).execute()
+                        # Collect data for return
+                        chunks_data.append({
+                            'chunk_index': i,
+                            'transcription_text': transcription,
+                            'start_time': start,
+                            'end_time': end,
+                            'speaker': speaker,
+                            'audio_chunk_url': chunk_path
+                        })
                         transcriptions.append({
                             'speaker': speaker,
                             'transcription': transcription,
@@ -228,23 +221,27 @@ def transcribe():
                 continue
 
         if not transcriptions:
-            supabase.table('transcription_sessions').update({'status': 'failed'}).eq('session_id', session_id).execute()
+            # supabase.table('transcription_sessions').update({'status': 'failed'}).eq('session_id', session_id).execute()
             return jsonify({'error': 'No transcriptions generated due to processing failures'}), 400
 
-        supabase.table('transcription_sessions').update({'status': 'completed'}).eq('session_id', session_id).execute()
+        # supabase.table('transcription_sessions').update({'status': 'completed'}).eq('session_id', session_id).execute()
 
         full_transcription = [
             f"[{entry['start']:.2f}s - {entry['end']:.2f}s] Speaker {entry['speaker']}: {entry['transcription']}"
             for entry in sorted(transcriptions, key=lambda x: x['start'])
-            if entry['transcription'].strip()  # Only include non-empty transcripts
+            if entry['transcription'].strip()
         ]
 
         shutil.rmtree(temp_dir)
-        return jsonify({'transcript': '\n'.join(full_transcription)})
+        return jsonify({
+            'transcript': '\n'.join(full_transcription),
+            'chunks': chunks_data, # Return structural data for frontend blockchain save
+            'session_id': session_id
+        })
     except Exception as e:
         print(f"General error at {datetime.now().strftime('%I:%M %p HKT, %b %d, %Y')}: {str(e)}")
-        if session_id:
-            supabase.table('transcription_sessions').update({'status': 'failed'}).eq('session_id', session_id).execute()
+        # if session_id:
+            # supabase.table('transcription_sessions').update({'status': 'failed'}).eq('session_id', session_id).execute()
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 if __name__ == '__main__':

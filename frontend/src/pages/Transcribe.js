@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import { ethers } from 'ethers'; // Requires: npm install ethers
 import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js';
 import './Transcribe.css';
 
@@ -251,47 +252,28 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
         }
         setTranscript([]);
       } else {
-        const parsedTranscript = parseTranscript(data.transcript);
-        setTranscript(parsedTranscript.filter(entry => entry.text && entry.text.trim()));
-        setHasTranscribed(parsedTranscript.filter(entry => entry.text && entry.text.trim()).length > 0);
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const { data: sessions } = await supabase
-            .from('transcription_sessions')
-            .select('session_id')
-            .eq('user_id', session.user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          const sessionId = sessions?.session_id;
-          if (sessionId) {
-            const { data: chunks } = await supabase
-              .from('transcription_chunks')
-              .select('*')
-              .eq('session_id', sessionId)
-              .order('chunk_index', { ascending: true });
-
-            if (chunks) {
-              const updatedTranscript = chunks
-                .map((chunk) => ({
-                  chunk_index: chunk.chunk_index,
-                  timestamp: `${parseFloat(chunk.start_time).toFixed(2)}s - ${parseFloat(chunk.end_time).toFixed(2)}s`,
-                  start_time: parseFloat(chunk.start_time).toFixed(2),
-                  end_time: parseFloat(chunk.end_time).toFixed(2),
-                  speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
-                  speakerId: chunk.speaker,
-                  text: chunk.transcription_text || '',
-                  audio_chunk_url: chunk.audio_chunk_url,
-                }))
-                .filter(entry => entry.text && entry.text.trim());
-              setTranscript(updatedTranscript);
-              setHasTranscribed(updatedTranscript.length > 0);
-              if (typeof setCredit === 'function') setCredit(newCredits);
-            }
-          }
+        // Use structured chunks from backend if available (supports Web3 flow)
+        if (data.chunks) {
+            const updatedTranscript = data.chunks.map((chunk) => ({
+                chunk_index: chunk.chunk_index,
+                timestamp: `${parseFloat(chunk.start_time).toFixed(2)}s - ${parseFloat(chunk.end_time).toFixed(2)}s`,
+                start_time: parseFloat(chunk.start_time).toFixed(2),
+                end_time: parseFloat(chunk.end_time).toFixed(2),
+                speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
+                speakerId: chunk.speaker,
+                text: chunk.transcription_text || '',
+                audio_chunk_url: chunk.audio_chunk_url,
+            }));
+            setTranscript(updatedTranscript);
+            setHasTranscribed(updatedTranscript.length > 0);
+        } else {
+            // Fallback for backward compatibility
+            const parsedTranscript = parseTranscript(data.transcript);
+            setTranscript(parsedTranscript.filter(entry => entry.text && entry.text.trim()));
+            setHasTranscribed(parsedTranscript.filter(entry => entry.text && entry.text.trim()).length > 0);
         }
+        
+        if (typeof setCredit === 'function') setCredit(newCredits);
       }
     } catch (error) {
       console.error('Error sending audio:', error);
@@ -513,6 +495,51 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     doc.save('transcript.pdf');
   };
 
+  const handleSaveToChain = async () => {
+      try {
+          if (!window.ethereum) {
+              alert('MetaMask is not installed!');
+              return;
+          }
+
+          // Request account access
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          
+          const CONTRACT_ADDRESS = "0xYourContractAddressHere"; // Replace with deployed contract address on Sepolia
+          // Minimal ABI for the saveSession function
+          const ABI = [
+            "function saveSession(string memory _sessionId, string memory _userId, tuple(uint256 startTime, uint256 endTime, string speaker, string text, string audioUrl)[] memory _chunks) public"
+          ];
+
+          const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id || "anon";
+          const sessionId = `session_${Date.now()}`;
+
+          // Format chunks for contract
+          // Multiply timestamps by 100 to store as integers (2 decimal places)
+          const formattedChunks = transcript.map(t => ({
+              startTime: Math.floor(parseFloat(t.start_time) * 100),
+              endTime: Math.floor(parseFloat(t.end_time) * 100),
+              speaker: t.speaker,
+              text: t.text,
+              audioUrl: t.audio_chunk_url || ""
+          }));
+
+          const tx = await contract.saveSession(sessionId, userId, formattedChunks);
+          alert(`Transaction sent! Hash: ${tx.hash}`);
+          await tx.wait();
+          alert('Transcription saved to blockchain successfully!');
+
+      } catch (err) {
+          console.error("Blockchain save error:", err);
+          alert('Failed to save to blockchain. See console for details.');
+      }
+  };
+
   return (
     <div className="transcribe-container">
       <p className="upload-instructions">Upload or drag a WAV file to start transcription.</p>
@@ -632,10 +659,10 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
             <div className="flex space-x-2 mt-4">
               <button
                 className="save-btn bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                onClick={handleSave}
-                aria-label="Save transcription"
+                onClick={handleSaveToChain}
+                aria-label="Save transcription to Blockchain"
               >
-                Save
+                Save to Blockchain
               </button>
               <select
                 className="export-select bg-gray-200 text-black px-4 py-2 rounded"

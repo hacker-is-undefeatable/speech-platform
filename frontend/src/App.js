@@ -10,6 +10,7 @@ import Transcribe from './pages/Transcribe';
 import Files from './pages/Files';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import Wallet from './pages/Wallet';
 import S2T from './pages/speech-to-text';
 import T2S from './pages/text-to-speech';
 
@@ -97,6 +98,14 @@ function AppContent() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Transcribe isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/wallet"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Wallet isAuthenticated={isAuthenticated} />
               </ProtectedRoute>
             }
           />
