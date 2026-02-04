@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000; /* Ensure background is black globally to avoid white borders */
+  overflow-x: hidden; /* Prevent horizontal scroll if something overflows slightly */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.content {
+  width: 100%;
+  min-height: 100vh;
+}

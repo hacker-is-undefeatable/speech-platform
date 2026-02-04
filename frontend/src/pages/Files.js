@@ -159,6 +159,7 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
 
   return (
     <div className="files-container">
+      <div className="files-content">
       <h1>Transcription History (Blockchain)</h1>
       <p>View your previous transcription sessions stored on Sepolia.</p>
       
@@ -259,6 +260,7 @@ function Files({ isAuthenticated, setIsAuthenticated }) {
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }
