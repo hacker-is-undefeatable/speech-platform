@@ -274,8 +274,10 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                 <button className="dropdown-trigger">Solutions <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.solutions && (
                   <div className="dropdown-content">
-                    <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>Empty</NavLink>
-                    <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>Empty</NavLink>
+                    <NavLink to="/solutions/api" className="dropdown-item">API</NavLink>
+                    <NavLink to="/solutions/combined-biometrics" className="dropdown-item">Biometrics & Sensor</NavLink>
+                    <NavLink to="/solutions/glasses" className="dropdown-item">Smart Glasses</NavLink>
+                    <NavLink to="/solutions/sensor" className="dropdown-item">Sensor Integration</NavLink>
                   </div>
                 )}
               </div>

@@ -13,6 +13,10 @@ import Pricing from './pages/Pricing';
 import Wallet from './pages/Wallet';
 import S2T from './pages/speech-to-text';
 import T2S from './pages/text-to-speech';
+import API from './pages/Solution/API';
+import CombinedBiometricsSensor from './pages/Solution/CombinedBiometricsSensor';
+import Glasses from './pages/Solution/Glasses';
+import Sensor from './pages/Solution/Sensor';
 
 // ProtectedRoute component to handle authentication
 const ProtectedRoute = ({ isAuthenticated, children }) => {
@@ -92,6 +96,22 @@ function AppContent() {
                     <Route
             path="/text-to-speech"
             element={<T2S isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
+          />
+          <Route
+            path="/solutions/api"
+            element={<API />}
+          />
+          <Route
+            path="/solutions/combined-biometrics"
+            element={<CombinedBiometricsSensor />}
+          />
+          <Route
+            path="/solutions/glasses"
+            element={<Glasses />}
+          />
+          <Route
+            path="/solutions/sensor"
+            element={<Sensor />}
           />
           <Route
             path="/app/transcribe"

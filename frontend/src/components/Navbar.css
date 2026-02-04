@@ -231,7 +231,16 @@
   box-shadow:0 6px 20px rgba(0,0,0,0.15);
   z-index:1001;
 }
-.dropdown-item { padding:8px 12px; }
+.dropdown-item { 
+  padding: 8px 12px;
+  color: #000000 !important;
+  text-decoration: none; 
+  display: block;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
 
 .navbar-actions { display:flex; align-items:center; }
 .navbar-right-actions {
