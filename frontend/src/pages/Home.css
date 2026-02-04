@@ -134,11 +134,11 @@
 .feature-card {
   position: relative;
   width: 320px;
-  height: 200px;
+  height: 400px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 400px 30px;
+  margin: 40px 30px;
   transition: 0.5s;
 }
 
@@ -295,10 +295,6 @@
   margin-right: 25px;
 }
 
-.feature-card .feature-card-box {
-  margin-top: 30px;
-}
-
 .feature-card .feature-card-box span::before {
   top: -50px;
   left: -50px;
@@ -310,7 +306,6 @@
 .feature-card .feature-card-box::after {
   content: '';
   position: absolute;
-  top: 100;
   bottom: 0;
   right: 0;
   width: 100%;
