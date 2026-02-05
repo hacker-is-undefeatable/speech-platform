@@ -88,7 +88,7 @@ export default function SensorIdeaPage() {
             </ul>
           </section>
 
-          <section className="section-card">
+          {/* <section className="section-card">
             <h2 className="section-title">Problem–Solution Matrix</h2>
             <ul className="list">
               <li><strong>Forgetful Wearables</strong></li>
@@ -104,7 +104,7 @@ export default function SensorIdeaPage() {
                 Mitigated using beamforming microphone arrays to isolate weak distress calls.
               </p>
             </ul>
-          </section>
+          </section> */}
         </div>
 
         {/* Market & Drivers */}
@@ -213,14 +213,156 @@ export default function SensorIdeaPage() {
         <div className="grid-2">
           <section className="section-card">
             <h2 className="section-title">Challenges</h2>
-            <ul className="list">
-              <li>False alarms → mitigated via HK elder datasets</li>
-              <li>Privacy → PDPO / GDPR compliant, no cloud by default</li>
-              <li>User acceptance → discreet smart-speaker-like design</li>
-              <li>Cost & reimbursement uncertainty</li>
-              <li>Supply-chain risks → multi-supplier strategy</li>
-            </ul>
+            <div className="table-container">
+              <table className="challenges-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Challenge</th>
+                    <th style={{ width: '40%' }}>Description</th>
+                    <th style={{ width: '40%' }}>Mitigation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Precision and False Alarms</strong></td>
+                    <td>Minimizing false alarms while maximizing sensitivity for real falls and distress events is technically challenging.</td>
+                    <td>Train models using diverse Cantonese datasets and validate performance through pilot testing with 100 Hong Kong elderly users.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Privacy</strong></td>
+                    <td>In-home and ambient monitoring systems raise concerns around data security and user consent.</td>
+                    <td>Ensure GDPR and HK PDPO compliance with fully on-device processing; optional cloud opt-in limited to non-urgent features.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Acceptance and Usability</strong></td>
+                    <td>Elderly users may resist technology that feels intrusive, complex, or stigmatizing.</td>
+                    <td>Minimalistic, domestic design resembling a smart speaker to blend naturally into home environments.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Cost and Reimbursement</strong></td>
+                    <td>High-quality sensing hardware can be expensive, while insurance reimbursement frameworks are still developing.</td>
+                    <td>—</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Supply Chain Risk</strong></td>
+                    <td>Microphone and sensor component availability may be affected by global supply chain disruptions.</td>
+                    <td>Work with multiple suppliers to reduce dependency on any single source.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
+        <section className="section-card">
+  <h2 className="section-title">Key Features</h2>
+
+  <ul className="list">
+    <li>
+      <strong>On-device Cantonese ASR</strong>
+      <p>
+        Low-latency, on-device speech recognition using SonoCanto technology,
+        designed for privacy-conscious environments, with optional cloud fallback
+        for heavy processing tasks.
+      </p>
+    </li>
+
+    <li>
+      <strong>Privacy by Design</strong>
+      <p>
+        Voice content and distress calls are never stored on the device, reducing
+        privacy and data security risks.
+      </p>
+    </li>
+
+    <li>
+      <strong>Instant Offline Emergency Response</strong>
+      <p>
+        Recognizes urgent commands such as「救命」or「打電話俾我個仔」and triggers
+        alerts even when internet connectivity is unavailable.
+      </p>
+    </li>
+
+    <li>
+      <strong>Multi-Microphone Noise Reduction</strong>
+      <p>
+        Multi-mic signal de-noising and beamforming technology designed for noisy
+        Hong Kong homes.
+      </p>
+    </li>
+
+    <li>
+      <strong>Digital Hearing Focus</strong>
+      <p>
+        Uses microphone arrays and adaptive filters to suppress background noise
+        such as TVs, traffic, fans, and neighboring apartments.
+      </p>
+    </li>
+
+    <li>
+      <strong>High Sensitivity to Weak Distress Calls</strong>
+      <p>
+        Minimizes false negatives by detecting weak or unclear help calls in
+        typical Hong Kong apartment environments.
+      </p>
+    </li>
+
+    <li>
+      <strong>Contextual Audio Intelligence</strong>
+      <p>
+        Intelligent audio analysis enables name recognition, emergency keyword
+        detection, and short contextual summaries.
+      </p>
+    </li>
+
+    <li>
+      <strong>Automatic Caregiver Notifications</strong>
+      <p>
+        Detects distress keywords, phrases, and sounds such as groans, screams,
+        or severe impact noises and notifies designated caregivers immediately.
+      </p>
+    </li>
+
+    <li>
+      <strong>Event Summaries for Caregivers</strong>
+      <p>
+        Generates brief event summaries (e.g. “21:47: detected keyword ‘pain’;
+        22:15: possible fall sound detected”) to provide situational context.
+      </p>
+    </li>
+
+    <li>
+      <strong>Enhanced Recognition Capabilities</strong>
+      <p>
+        Cantonese ASR optimized for colloquial speech (口語) in noisy environments,
+        with future expansion to fall sound detection combining impact and vocal cues.
+      </p>
+    </li>
+
+    <li>
+      <strong>Companion App Support</strong>
+      <p>
+        Companion applications provide transcript history, caregiver sharing,
+        battery monitoring, and firmware management.
+      </p>
+    </li>
+
+    <li>
+      <strong>Multi-Caregiver Access</strong>
+      <p>
+        Allows multiple family members or professional caregivers to receive alerts
+        and system updates.
+      </p>
+    </li>
+
+    <li>
+      <strong>Simple Voice Setup & Local Integrations</strong>
+      <p>
+        Voice-based setup designed for non-technical users, with WeChat and LINE
+        integration for notifications in Hong Kong.
+      </p>
+    </li>
+  </ul>
+</section>
+
 
           <section className="section-card">
             <h2 className="section-title">Competitor Analysis</h2>

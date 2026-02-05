@@ -154,7 +154,7 @@ p {
 }
 
 .list li::before {
-  content: '➢'; /* Arrow or bullet */
+  content: '➢';
   color: #ff00cc;
   position: absolute;
   left: 0;
@@ -220,4 +220,45 @@ p {
   .sensor-page {
     padding: 60px 15px 30px;
   }
+}
+
+/* Table Styles */
+.table-container {
+  overflow-x: auto;
+}
+
+.challenges-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  color: #dddddd;
+  font-size: 0.95rem;
+}
+
+.challenges-table th,
+.challenges-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.challenges-table th {
+  color: #7bedff;
+  font-weight: 700;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.challenges-table td strong {
+  color: #ff93e9;
+}
+
+.challenges-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.challenges-table tr:last-child td {
+  border-bottom: 1px solid #ffffff;
 }
