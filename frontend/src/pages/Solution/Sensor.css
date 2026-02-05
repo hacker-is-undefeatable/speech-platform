@@ -83,6 +83,7 @@ body {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  text-align: left; /* Explicitly align left */
 }
 
 .section-card:hover {
@@ -117,6 +118,14 @@ body {
   line-height: 1.7;
   font-size: 1.05rem;
   text-align: left;
+}
+
+p {
+    text-align: left;
+}
+
+.text-content p {
+    text-align: left;
 }
 
 .text-italic {
@@ -154,18 +163,13 @@ body {
 }
 
 /* Grids */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr;
+.grid-2, .grid-3 {
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 
-.grid-3 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-}
-
+/* 
 @media (min-width: 768px) {
   .grid-2 {
     grid-template-columns: repeat(2, 1fr);
@@ -173,6 +177,39 @@ body {
   .grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
+} 
+*/
+
+
+/* Chart */
+.chart-container {
+  height: 20rem; /* Increased slightly for better visibility */
+  width: 100%;
+}
+
+.market-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+/* Desktop layout for market section */
+@media (min-width: 768px) {
+  .market-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr; /* Give chart slightly more space */
+    align-items: center;
+    gap: 2rem;
+  }
+}
+
+.text-gray-600 {
+    color: #9ca3af;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
 }
 
 /* Responsive Headers */
