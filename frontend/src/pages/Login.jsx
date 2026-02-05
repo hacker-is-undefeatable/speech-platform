@@ -285,23 +285,9 @@ export default function Login({ setIsAuthenticated }) {
           return;
         }
         if (data.user) {
-          // Prefer DB trigger to create public.users + user_profiles on signup.
-          // Upsert here is a safe fallback and avoids duplicate-key failures.
-          const { error: profileError } = await supabase.from('user_profiles').upsert(
-            {
-              id: data.user.id,
-              email: email,
-              display_name: `${firstName} ${lastName}`.trim(),
-              credits: 30,
-            },
-            { onConflict: 'id' }
-          );
-          if (!isMounted) return;
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            setNotifications([{ type: 'danger', message: `${t.failure}: Failed to create profile. ${profileError.message || ''}` }]);
-            return;
-          }
+          // Profile creation is handled by Database Trigger (see sql/triggers.sql)
+          // We skips manual creation here to avoid RLS issues when email is not confirmed yet.
+          
           if (data.session) {
             localStorage.setItem('token', data.session.access_token);
             setIsAuthenticated(true);
