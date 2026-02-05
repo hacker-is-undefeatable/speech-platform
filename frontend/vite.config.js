@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
     },
     define: {
-      'process.env': env
+      'process.env': JSON.stringify(env)
     }
   }
 })

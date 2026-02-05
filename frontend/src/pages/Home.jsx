@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // import SmokeyCursor from '../components/lightswind/smokey-cursor';
 import './Home.css';
 import { NavLink, useNavigate } from 'react-router-dom';
-import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js';
+import WaveSurfer from 'wavesurfer.js';
 
 function Home({ isAuthenticated, setIsAuthenticated, language, setLanguage }) {
   const navigate = useNavigate();
