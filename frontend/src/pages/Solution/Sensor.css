@@ -1,0 +1,186 @@
+
+body {
+  background-color: #000000; /* Ensure body is dark to match */
+}
+
+.sensor-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+  padding: 80px 20px 40px;
+  overflow-x: hidden;
+}
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+/* Header */
+.header-card {
+  text-align: center;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+}
+
+.main-title {
+  font-size: 4rem; /* Adjusted for better fit */
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  
+  /* Gradient text effect matching Home.css */
+  background: linear-gradient(45deg, #ff00cc, #00ddff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  display: inline-block;
+  background-size: 200% 200%;
+  animation: gradientFlow 5s linear infinite;
+  
+  /* Drop shadow for readability */
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 50% 50%; }
+  100% { background-position: 0% 0%; }
+}
+
+.icon {
+  font-size: 0.8em; /* Relative to title */
+  margin-right: 15px;
+  vertical-align: baseline;
+  filter: none; /* Emojis often don't take text gradients well, keep them natural or filter them */
+  -webkit-text-fill-color: initial; /* Reset text fill for emoji */
+}
+
+.main-subtitle {
+  font-size: 1.25rem;
+  color: #cccccc;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Sections as Dark Cards */
+.section-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2.5rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 221, 255, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 221, 255, 0.2);
+}
+
+/* Subtle gradient accent on top of cards */
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff00cc, #00ddff);
+  opacity: 0.7;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-content {
+  color: #dddddd;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  text-align: left;
+}
+
+.text-italic {
+  font-style: italic;
+  color: #a0a0a0;
+  margin-top: 1.5rem;
+  background: rgba(0, 221, 255, 0.05); /* Very subtle highlight */
+  padding: 1rem;
+  border-left: 3px solid #00ddff;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Lists */
+.list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 1rem;
+}
+
+.list li {
+  margin-bottom: 0.8rem;
+  padding-left: 1.8rem;
+  position: relative;
+  color: #dddddd;
+  line-height: 1.5;
+}
+
+.list li::before {
+  content: '➢'; /* Arrow or bullet */
+  color: #ff00cc;
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1.1rem;
+}
+
+/* Grids */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Responsive Headers */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2.5rem;
+  }
+  .sensor-page {
+    padding: 60px 15px 30px;
+  }
+}
