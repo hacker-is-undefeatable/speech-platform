@@ -4,7 +4,6 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import About from './pages/About';
 import Help from './pages/Help';
 import Transcribe from './pages/Transcribe';
 import Files from './pages/Files';
@@ -68,10 +67,6 @@ function AppContent() {
           <Route
             path="/pricing"
             element={<Pricing isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
-          />
-          <Route
-            path="/about"
-            element={<About isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} language={language} setLanguage={setLanguage} />}
           />
           <Route
             path="/help"
