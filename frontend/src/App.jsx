@@ -24,7 +24,6 @@ import SensorDrivers from './pages/Solution/SensorDrivers';
 import SensorChallenges from './pages/Solution/SensorChallenges';
 import SensorFeatures from './pages/Solution/SensorFeatures';
 import SensorCompetitors from './pages/Solution/SensorCompetitors';
-import SensorDifferentiators from './pages/Solution/SensorDifferentiators';
 import SensorManufacturers from './pages/Solution/SensorManufacturers';
 import SensorPartnerships from './pages/Solution/SensorPartnerships';
 import SensorRoadmap from './pages/Solution/SensorRoadmap';
