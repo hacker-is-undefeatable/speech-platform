@@ -223,13 +223,26 @@
 }
 .dropdown-content {
   position:absolute;
-  top:100%;
-  left:0;
-  background:#fff;
-  border-radius:6px;
-  min-width:160px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.15);
-  z-index:1001;
+  top: 120%; /* Add a tiny buffer so mouse doesn't slip */
+  left: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  min-width: 200px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 1001;
+  padding: 8px 0;
+  border: 1px solid rgba(0,0,0,0.04);
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Ensure bridge area so hover isn't lost */
+.dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 10px;
 }
 .dropdown-item { 
   padding: 8px 12px;
@@ -408,14 +421,24 @@
 }
 
 .dropdown-submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  background: #fff;
-  border-radius: 6px;
-  min-width: 160px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-  z-index: 1002;
+    position: absolute;
+    left: 100%;
+    top: -8px; /* Slight offset to align top */
+    background: #ffffff;
+    border-radius: 8px;
+    min-width: 220px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    z-index: 1002;
+    padding: 8px 0;
+    max-height: 80vh; /* Prevent off-screen */
+    overflow-y: auto; /* Scrollable if too tall */
+    border: 1px solid rgba(0,0,0,0.04);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .submenu-trigger {
@@ -424,12 +447,48 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+    padding: 10px 16px;
+    transition: background 0.15s ease;
 }
 
 .arrow-right {
-    font-size: 1.2rem;
-    line-height: 1;
-    margin-left: 8px;
-    color: #666;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* Improve general dropdown items as well */
+.navbar-links .dropdown-item, .dropdown-item { 
+    padding: 10px 16px;
+    color: #333 !important;
+    text-decoration: none; 
+    display: block;
+    font-size: 0.95rem; /* Consistently enforce 0.95rem */
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-radius: 4px;
+    margin: 0 4px; /* Tiny side margin for rounded hover effect */
+    font-family: 'Lato', sans-serif; /* Reset font family just in case */
+}
+
+.dropdown-item:hover {
+    background-color: #f7f7f7;
+    color: #8000ff !important; /* Brand color on hover */
+    transform: translateX(2px);
+}
+
+/* Custom scrollbar for long submenus */
+.dropdown-submenu::-webkit-scrollbar {
+    width: 6px;
+}
+.dropdown-submenu::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 8px;
+}
+.dropdown-submenu::-webkit-scrollbar-thumb {
+    background: #ccc; 
+    border-radius: 8px;
+}
+.dropdown-submenu::-webkit-scrollbar-thumb:hover {
+    background: #aaa; 
 }
 
