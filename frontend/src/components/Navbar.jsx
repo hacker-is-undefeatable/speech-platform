@@ -261,7 +261,7 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                         onMouseEnter={() => openMenu('sensor')}
                         onMouseLeave={() => closeMenu('sensor')}
                     >
-                        <span>Sensor Integration</span>
+                        <NavLink to="/solutions/sensor" style={{textDecoration: 'none', color: 'inherit'}}>Sensor Integration</NavLink>
                         <span className="arrow-right">›</span>
                         
                         {isDropdownOpen.sensor && (
