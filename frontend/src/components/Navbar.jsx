@@ -14,10 +14,14 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
     api: false,
     resources: false,
     pricing: false,
+    sensorIntegartion: false, 
   });
 
   const [showNavbar, setShowNavbar] = useState(true);
 
+  // ... (keeping fetchWalletBalance and useEffects)
+
+  // ... 
   const fetchWalletBalance = async (address) => {
     if (window.ethereum && address) {
       try {
@@ -66,7 +70,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
   useEffect(() => {
     const storedAddress = localStorage.getItem('walletAddress');
     if (storedAddress) {
-      // Improve: verify if still connected in provider
       if (window.ethereum) {
          window.ethereum.request({ method: 'eth_accounts' })
           .then(accounts => {
@@ -74,7 +77,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                  setWalletAddress(storedAddress);
                  fetchWalletBalance(storedAddress);
              } else {
-                 // Disconnected in metamask or switched accounts
                  localStorage.removeItem('walletAddress');
                  setWalletAddress('');
              }
@@ -86,24 +88,21 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
-        // 1. Request access to the user's wallet
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const account = accounts[0];
         
-        // 2. Request signature to verify ownership
         const message = "Welcome to SonoCanto! Please sign this message to verify your wallet ownership.";
         await window.ethereum.request({
           method: 'personal_sign',
           params: [message, account],
         });
 
-        // 3. Only set the address if signing succeeds
         setWalletAddress(account);
-        localStorage.setItem('walletAddress', account); // Persist
+        localStorage.setItem('walletAddress', account); 
         fetchWalletBalance(account);
       } catch (error) {
         console.error("Error connecting/signing with MetaMask", error);
-        setWalletAddress(''); // Check if we should clear it or user just rejected signature
+        setWalletAddress(''); 
         localStorage.removeItem('walletAddress');
       }
     } else {
@@ -118,7 +117,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
           connectWallet();
       }
   };
-
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -172,7 +170,7 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
 
     fetchCredits();
     return () => { isMounted = false; };
-  }, [isAuthenticated]);
+  }, [isAuthenticated]); 
 
   const handleLogin = () => navigate('/login');
   const handleSignUp = () => navigate('/login?mode=register');
@@ -188,7 +186,10 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
     }
   };
   const handleCreditsClick = () => { if (isAuthenticated) navigate('/app/subscription'); };
-  const toggleDropdown = (menu) => setIsDropdownOpen(prev => ({ ...prev, [menu]: !prev[menu] }));
+  
+  // Explicit open/close to prevent flickering and handle submenus better
+  const openMenu = (menu) => setIsDropdownOpen(prev => ({ ...prev, [menu]: true }));
+  const closeMenu = (menu) => setIsDropdownOpen(prev => ({ ...prev, [menu]: false }));
 
   return (
     <nav className={`navbar ${isAuthenticated ? 'navbar-app' : 'navbar-top'} ${showNavbar ? 'nav-visible' : 'nav-hidden'}`}>
@@ -245,31 +246,8 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
             <div className="navbar-links">
               <div
                 className="dropdown"
-                onMouseEnter={() => toggleDropdown('platform')}
-                onMouseLeave={() => toggleDropdown('platform')}
-              >
-                <button className="dropdown-trigger">
-                  Platform
-                  <img src="/images/image.png" className="dropdown-icon" alt="" />
-                </button>
-                {isDropdownOpen.platform && (
-                  <div className="dropdown-content">
-                    <div className="dropdown-item">Text to Speech</div>
-                    <div className="dropdown-item">Speech to Text</div>
-                    <div className="dropdown-item">Voice Changer</div>
-                    <div className="dropdown-item">Text to Sound Effects</div>
-                    <div className="dropdown-item">Voice Cloning</div>
-                    <div className="dropdown-item">Voice Isolator</div>
-                    <div className="dropdown-item">Voice Design</div>
-                    <div className="dropdown-item">Music</div>
-                  </div>
-                )}
-              </div>
-
-              <div
-                className="dropdown"
-                onMouseEnter={() => toggleDropdown('solutions')}
-                onMouseLeave={() => toggleDropdown('solutions')}
+                onMouseEnter={() => openMenu('solutions')}
+                onMouseLeave={() => closeMenu('solutions')}
               >
                 <button className="dropdown-trigger">Solutions <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.solutions && (
@@ -277,15 +255,42 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                     <NavLink to="/solutions/api" className="dropdown-item">API</NavLink>
                     <NavLink to="/solutions/combined-biometrics" className="dropdown-item">Biometrics & Sensor</NavLink>
                     <NavLink to="/solutions/glasses" className="dropdown-item">Smart Glasses</NavLink>
-                    <NavLink to="/solutions/sensor" className="dropdown-item">Sensor Integration</NavLink>
+                    
+                    <div 
+                        className="dropdown-item submenu-trigger"
+                        onMouseEnter={() => openMenu('sensor')}
+                        onMouseLeave={() => closeMenu('sensor')}
+                    >
+                        <span>Sensor Integration</span>
+                        <span className="arrow-right">›</span>
+                        
+                        {isDropdownOpen.sensor && (
+                            <div className="dropdown-submenu">
+                                <NavLink to="/solutions/sensor/core" className="dropdown-item">Core Promise</NavLink>
+                                <NavLink to="/solutions/sensor/problem" className="dropdown-item">Problem Statement</NavLink>
+                                <NavLink to="/solutions/sensor/hk-context" className="dropdown-item">HK Context</NavLink>
+                                <NavLink to="/solutions/sensor/market" className="dropdown-item">Market Opportunity</NavLink>
+                                <NavLink to="/solutions/sensor/drivers" className="dropdown-item">Key Drivers</NavLink>
+                                <NavLink to="/solutions/sensor/challenges" className="dropdown-item">Challenges</NavLink>
+                                <NavLink to="/solutions/sensor/features" className="dropdown-item">Key Features</NavLink>
+                                <NavLink to="/solutions/sensor/competitors" className="dropdown-item">Competitor Analysis</NavLink>
+                                <NavLink to="/solutions/sensor/differentiators" className="dropdown-item">Differentiators</NavLink>
+                                <NavLink to="/solutions/sensor/manufacturers" className="dropdown-item">Manufacturers</NavLink>
+                                <NavLink to="/solutions/sensor/partnerships" className="dropdown-item">Partnerships</NavLink>
+                                <NavLink to="/solutions/sensor/roadmap" className="dropdown-item">Roadmap</NavLink>
+                                <NavLink to="/solutions/sensor/monetization" className="dropdown-item">Monetization</NavLink>
+                                <NavLink to="/solutions/sensor/next-steps" className="dropdown-item">Next Steps</NavLink>
+                            </div>
+                        )}
+                    </div>
                   </div>
                 )}
               </div>
 
               <div
                 className="dropdown"
-                onMouseEnter={() => toggleDropdown('api')}
-                onMouseLeave={() => toggleDropdown('api')}
+                onMouseEnter={() => openMenu('api')}
+                onMouseLeave={() => closeMenu('api')}
               >
                 <button className="dropdown-trigger">API <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.api && (
@@ -298,8 +303,8 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
 
               <div
                 className="dropdown"
-                onMouseEnter={() => toggleDropdown('resources')}
-                onMouseLeave={() => toggleDropdown('resources')}
+                onMouseEnter={() => openMenu('resources')}
+                onMouseLeave={() => closeMenu('resources')}
               >
                 <button className="dropdown-trigger">Resources <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.resources && (
@@ -311,8 +316,8 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
               </div>
               <div
                 className="dropdown"
-                onMouseEnter={() => toggleDropdown('pricing')}
-                onMouseLeave={() => toggleDropdown('pricing')}
+                onMouseEnter={() => openMenu('pricing')}
+                onMouseLeave={() => closeMenu('pricing')}
               >
                 <button className="dropdown-trigger">Pricing <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.pricing && (

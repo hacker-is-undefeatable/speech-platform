@@ -262,6 +262,7 @@ export default function Login({ setIsAuthenticated }) {
   };
 
   const handleSubmit = async () => {
+    if (isLoading) return; // Prevent double click
     if (!validateForm()) return;
 
     let isMounted = true;
@@ -819,7 +820,7 @@ export default function Login({ setIsAuthenticated }) {
                           </div>
                         </>
                       )}
-                      <button className="submit-button" onClick={handleSubmit}>
+                      <button className={`submit-button ${isLoading ? 'loading' : ''}`} onClick={handleSubmit} disabled={isLoading}>
                         <span className="btn-text">{isRegister ? t.register : t.login}</span>
                         <div className="btn-bg"></div>
                         <div className="btn-loader">

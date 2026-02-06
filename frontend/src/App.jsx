@@ -16,6 +16,20 @@ import API from './pages/Solution/API';
 import CombinedBiometricsSensor from './pages/Solution/CombinedBiometricsSensor';
 import Glasses from './pages/Solution/Glasses';
 import Sensor from './pages/Solution/Sensor';
+import SensorCore from './pages/Solution/SensorCore';
+import SensorProblem from './pages/Solution/SensorProblem';
+import SensorHKContext from './pages/Solution/SensorHKContext';
+import SensorMarket from './pages/Solution/SensorMarket';
+import SensorDrivers from './pages/Solution/SensorDrivers';
+import SensorChallenges from './pages/Solution/SensorChallenges';
+import SensorFeatures from './pages/Solution/SensorFeatures';
+import SensorCompetitors from './pages/Solution/SensorCompetitors';
+import SensorDifferentiators from './pages/Solution/SensorDifferentiators';
+import SensorManufacturers from './pages/Solution/SensorManufacturers';
+import SensorPartnerships from './pages/Solution/SensorPartnerships';
+import SensorRoadmap from './pages/Solution/SensorRoadmap';
+import SensorMonetization from './pages/Solution/SensorMonetization';
+import SensorNextSteps from './pages/Solution/SensorNextSteps';
 
 // ProtectedRoute component to handle authentication
 const ProtectedRoute = ({ isAuthenticated, children }) => {
@@ -108,6 +122,20 @@ function AppContent() {
             path="/solutions/sensor"
             element={<Sensor />}
           />
+          <Route path="/solutions/sensor/core" element={<SensorCore />} />
+          <Route path="/solutions/sensor/problem" element={<SensorProblem />} />
+          <Route path="/solutions/sensor/hk-context" element={<SensorHKContext />} />
+          <Route path="/solutions/sensor/market" element={<SensorMarket />} />
+          <Route path="/solutions/sensor/drivers" element={<SensorDrivers />} />
+          <Route path="/solutions/sensor/challenges" element={<SensorChallenges />} />
+          <Route path="/solutions/sensor/features" element={<SensorFeatures />} />
+          <Route path="/solutions/sensor/competitors" element={<SensorCompetitors />} />
+          <Route path="/solutions/sensor/differentiators" element={<SensorDifferentiators />} />
+          <Route path="/solutions/sensor/manufacturers" element={<SensorManufacturers />} />
+          <Route path="/solutions/sensor/partnerships" element={<SensorPartnerships />} />
+          <Route path="/solutions/sensor/roadmap" element={<SensorRoadmap />} />
+          <Route path="/solutions/sensor/monetization" element={<SensorMonetization />} />
+          <Route path="/solutions/sensor/next-steps" element={<SensorNextSteps />} />
           <Route
             path="/app/transcribe"
             element={
