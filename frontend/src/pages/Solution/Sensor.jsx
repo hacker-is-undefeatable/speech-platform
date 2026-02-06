@@ -11,7 +11,6 @@ import imgDrivers from "../../../assets/images/sensor/drivers.png";
 import imgChallenges from "../../../assets/images/sensor/challenges.png";
 import imgFeatures from "../../../assets/images/sensor/features.png";
 import imgCompetitors from "../../../assets/images/sensor/competitor-analysis.png";
-import imgDifferentiators from "../../../assets/images/sensor/differentiators.png";
 import imgManufacturers from "../../../assets/images/sensor/manufacturer.png";
 import imgPartnerships from "../../../assets/images/sensor/partnership.png";
 import imgRoadmap from "../../../assets/images/sensor/roadmap.png";
@@ -27,7 +26,6 @@ const sensorSections = [
   { title: "Challenges", path: "/solutions/sensor/challenges", icon: imgChallenges },
   { title: "Key Features", path: "/solutions/sensor/features", icon: imgFeatures },
   { title: "Competitor Analysis", path: "/solutions/sensor/competitors", icon: imgCompetitors },
-  { title: "Differentiators", path: "/solutions/sensor/differentiators", icon: imgDifferentiators },
   { title: "Manufacturers", path: "/solutions/sensor/manufacturers", icon: imgManufacturers },
   { title: "Partnerships", path: "/solutions/sensor/partnerships", icon: imgPartnerships },
   { title: "Product Roadmap", path: "/solutions/sensor/roadmap", icon: imgRoadmap },
