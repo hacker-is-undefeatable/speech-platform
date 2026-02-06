@@ -270,7 +270,6 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                                 <NavLink to="/solutions/sensor/challenges" className="dropdown-item">Challenges</NavLink>
                                 <NavLink to="/solutions/sensor/features" className="dropdown-item">Key Features</NavLink>
                                 <NavLink to="/solutions/sensor/competitors" className="dropdown-item">Competitor Analysis</NavLink>
-                                <NavLink to="/solutions/sensor/differentiators" className="dropdown-item">Differentiators</NavLink>
                                 <NavLink to="/solutions/sensor/manufacturers" className="dropdown-item">Manufacturers</NavLink>
                                 <NavLink to="/solutions/sensor/partnerships" className="dropdown-item">Partnerships</NavLink>
                                 <NavLink to="/solutions/sensor/roadmap" className="dropdown-item">Roadmap</NavLink>
