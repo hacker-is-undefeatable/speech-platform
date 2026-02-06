@@ -443,7 +443,7 @@
 
 .submenu-trigger {
     position: relative;
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;

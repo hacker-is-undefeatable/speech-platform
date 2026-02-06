@@ -252,17 +252,13 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                 <button className="dropdown-trigger">Solutions <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
                 {isDropdownOpen.solutions && (
                   <div className="dropdown-content">
-                    <NavLink to="/solutions/api" className="dropdown-item">API</NavLink>
-                    <NavLink to="/solutions/combined-biometrics" className="dropdown-item">Biometrics & Sensor</NavLink>
-                    <NavLink to="/solutions/glasses" className="dropdown-item">Smart Glasses</NavLink>
-                    
                     <div 
                         className="dropdown-item submenu-trigger"
                         onMouseEnter={() => openMenu('sensor')}
                         onMouseLeave={() => closeMenu('sensor')}
                     >
                         <NavLink to="/solutions/sensor" style={{textDecoration: 'none', color: 'inherit'}}>Sensor Integration</NavLink>
-                        <span className="arrow-right">›</span>
+                        <span className="arrow-right">&gt;</span>
                         
                         {isDropdownOpen.sensor && (
                             <div className="dropdown-submenu">
@@ -283,6 +279,10 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                             </div>
                         )}
                     </div>
+                    <NavLink to="/solutions/api" className="dropdown-item">API</NavLink>
+                    <NavLink to="/solutions/combined-biometrics" className="dropdown-item">Biometrics & Sensor</NavLink>
+                    <NavLink to="/solutions/glasses" className="dropdown-item">Smart Glasses</NavLink>
+                    
                   </div>
                 )}
               </div>
