@@ -129,7 +129,6 @@ function AppContent() {
           <Route path="/solutions/sensor/challenges" element={<SensorChallenges />} />
           <Route path="/solutions/sensor/features" element={<SensorFeatures />} />
           <Route path="/solutions/sensor/competitors" element={<SensorCompetitors />} />
-          <Route path="/solutions/sensor/differentiators" element={<SensorDifferentiators />} />
           <Route path="/solutions/sensor/manufacturers" element={<SensorManufacturers />} />
           <Route path="/solutions/sensor/partnerships" element={<SensorPartnerships />} />
           <Route path="/solutions/sensor/roadmap" element={<SensorRoadmap />} />
