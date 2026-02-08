@@ -74,6 +74,30 @@ export default function SensorCompetitors() {
                         </table>
                     </div>
                 </section>
+
+                <section className="section-card">
+                    <h2 className="section-title">Key Differentiators</h2>
+                    <ul className="differentiators-list" style={{ listStyleType: 'none', padding: 0 }}>
+                        <li style={{ marginBottom: '25px' }}>
+                            <h3 style={{ color: '#8000ff', fontSize: '1.2rem', marginBottom: '8px' }}>Passive & Native Design</h3>
+                            <p className="text-content" style={{ margin: 0 }}>
+                                Unlike the Apple Watch which relies on active wearing, SonoCanto is a passive, ambient system. It provides continuous protection native to Cantonese speakers without requiring the elderly to manage a wearable device.
+                            </p>
+                        </li>
+                        <li style={{ marginBottom: '25px' }}>
+                            <h3 style={{ color: '#8000ff', fontSize: '1.2rem', marginBottom: '8px' }}>Actionable Insights vs. Alerts</h3>
+                            <p className="text-content" style={{ margin: 0 }}>
+                                While systems like Philips Lifeline focus on simple alerts, SonoCanto leverages NLP to generate context-aware summaries. This ensures caregivers understand the situation's nuance rather than just receiving a binary alarm.
+                            </p>
+                        </li>
+                        <li>
+                            <h3 style={{ color: '#8000ff', fontSize: '1.2rem', marginBottom: '8px' }}>Specialized Emergency Recognition</h3>
+                            <p className="text-content" style={{ margin: 0 }}>
+                                General captioning tools (e.g., Ava/Transcense) often struggle with Asian dialects in high-stress environments. SonoCanto is engineered specifically for emergency scenarios, prioritizing accuracy for Cantonese speakers where generalist tools fall short.
+                            </p>
+                        </li>
+                    </ul>
+                </section>
             </div>
         </div>
     );
