@@ -286,47 +286,9 @@ function Navbar({ isAuthenticated, setIsAuthenticated }) {
                 )}
               </div>
 
-              <div
-                className="dropdown"
-                onMouseEnter={() => openMenu('api')}
-                onMouseLeave={() => closeMenu('api')}
-              >
-                <button className="dropdown-trigger">API <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
-                {isDropdownOpen.api && (
-                  <div className="dropdown-content">
-                    <NavLink to="/docs" className={({ isActive }) => (isActive ? 'active' : '')}>API Docs (TBD)</NavLink>
-                    <NavLink to="/getting-started" className={({ isActive }) => (isActive ? 'active' : '')}>Getting Started (TBD)</NavLink>
-                  </div>
-                )}
-              </div>
-
-              <div
-                className="dropdown"
-                onMouseEnter={() => openMenu('resources')}
-                onMouseLeave={() => closeMenu('resources')}
-              >
-                <button className="dropdown-trigger">Resources <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
-                {isDropdownOpen.resources && (
-                  <div className="dropdown-content">
-                    <NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>About Us</NavLink>
-                    <NavLink to="/resources/guides" className={({ isActive }) => (isActive ? 'active' : '')}>Guides</NavLink>
-                  </div>
-                )}
-              </div>
-              <div
-                className="dropdown"
-                onMouseEnter={() => openMenu('pricing')}
-                onMouseLeave={() => closeMenu('pricing')}
-              >
-                <button className="dropdown-trigger">Pricing <img src="/images/image.png" className="dropdown-icon" alt="" /></button>
-                {isDropdownOpen.pricing && (
-                  <div className="dropdown-content">
-                    <NavLink to="/pricing" className={({ isActive }) => (isActive ? 'active' : '')}>Compare Plans</NavLink>
-                    <NavLink to="/getting-started" className={({ isActive }) => (isActive ? 'active' : '')}>Enterprise</NavLink>
-                    <NavLink to="/getting-started" className={({ isActive }) => (isActive ? 'active' : '')}>Scale</NavLink>
-                  </div>
-                )}
-              </div>
+              <NavLink to="/pricing" className={({ isActive }) => (isActive ? 'active dropdown-trigger' : 'dropdown-trigger')} style={{textDecoration: 'none', color: 'white', display: 'flex', alignItems: 'center'}}>
+                Pricing
+              </NavLink>
             </div>
 
             <div className="navbar-actions">
