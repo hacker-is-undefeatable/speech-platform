@@ -43,152 +43,19 @@ function Pricing({ isAuthenticated, setIsAuthenticated }) {
     },
   ];
 
-  // Collect all unique features for the comparison table
-  const allFeatures = [...new Set(subscriptionPlans.flatMap(plan => plan.features))];
-
-  // Define table content for each feature and plan
-  const tableContent = {
-    '0.5 hr transcription/month': {
-      Free: 'Included',
-      Pro: 'Not available',
-      ProPlus: 'Not available',
-    },
-    'Cantonese support': {
-      Free: 'Included',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Basic text export': {
-      Free: 'Included',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Access to a limited set of tutorial resources': {
-      Free: 'Included',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Email support with a 48-hour response time': {
-      Free: 'Included',
-      Pro: 'Not available',
-      ProPlus: 'Not available',
-    },
-    '20 hrs transcription/month': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Not available',
-    },
-    'Cantonese & Mandarin support': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Advanced editing (e.g., manual corrections, timestamps)': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Priority support with a 24-hour response time': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Not available',
-    },
-    'Basic analytics (e.g., transcription duration report)': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Export in multiple formats (e.g., TXT, DOCX)': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Real-time transcription with a 5-second delay': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Not available',
-    },
-    'Customizable transcription settings (e.g., speaker separation)': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Audio enhancement for clearer input': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Mobile app access for on-the-go transcription': {
-      Free: 'Not available',
-      Pro: 'Included',
-      ProPlus: 'Included',
-    },
-    'Unlimited transcription': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'All dialects & offline mode': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Team collaboration (e.g., shared projects, multi-user access)': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Dedicated account manager': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Advanced analytics (e.g., speaker identification, usage trends)': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Export with customizable templates and metadata': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Integration with third-party tools (e.g., CRM, cloud storage)': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Real-time transcription with no delay': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'AI-powered summary generation': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Automated workflow integration (e.g., auto-save to cloud)': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Multi-device synchronization': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    '24/7 premium support with live chat': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-    'Priority processing for faster transcription turnaround': {
-      Free: 'Not available',
-      Pro: 'Not available',
-      ProPlus: 'Included',
-    },
-  };
+  // Simplified comparison data for a concise table
+  const comparisonRows = [
+    { feature: 'Monthly Transcription', free: '0.5 hr', pro: '20 hrs', proPlus: 'Unlimited' },
+    { feature: 'Language Support', free: 'Cantonese', pro: 'Cantonese & Mandarin', proPlus: 'All Dialects + Offline' },
+    { feature: 'Export Formats', free: 'Basic (TXT)', pro: 'Key Formats (TXT, DOCX)', proPlus: 'Custom + Metadata' },
+    { feature: 'Real-time Delay', free: '-', pro: '5 sec', proPlus: 'None (Instant)' },
+    { feature: 'Analytics', free: '-', pro: 'Basic Features', proPlus: 'Advanced Insights' },
+    { feature: 'Audio Enhancement', free: '-', pro: 'Included', proPlus: 'Included' },
+    { feature: 'Mobile App', free: '-', pro: 'Included', proPlus: 'Included' },
+    { feature: 'Team Collaboration', free: '-', pro: '-', proPlus: 'Included' },
+    { feature: 'AI Summary', free: '-', pro: '-', proPlus: 'Included' },
+    { feature: 'Support Speed', free: '48 hrs', pro: '24 hrs', proPlus: 'Live Chat (24/7)' },
+  ];
 
   return (
     <div className="pricing-container">
@@ -261,25 +128,23 @@ function Pricing({ isAuthenticated, setIsAuthenticated }) {
         {/* Comparison Table Section */}
         <section className="comparison-section">
           <h2 className="comparison-title">Compare Plans</h2>
-          <div className="comparison-table-container">
-            <table className="comparison-table">
+          <div className="table-container">
+            <table className="challenges-table">
               <thead>
                 <tr>
-                  <th>Features</th>
+                  <th style={{ width: '25%' }}>Features</th>
                   {subscriptionPlans.map((plan, index) => (
-                    <th key={index} className={plan.recommended ? 'recommended' : ''}>{plan.name}</th>
+                    <th key={index} style={{ width: '25%' }} className={plan.recommended ? 'recommended' : ''}>{plan.name}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {allFeatures.map((feature, index) => (
+                {comparisonRows.map((row, index) => (
                   <tr key={index}>
-                    <td>{feature}</td>
-                    {subscriptionPlans.map((plan, i) => (
-                      <td key={i} className="feature-status">
-                        {tableContent[feature][plan.name === 'Free' ? 'Free' : plan.name === 'Pro (+30% off during early access)' ? 'Pro' : 'ProPlus']}
-                      </td>
-                    ))}
+                    <td><strong>{row.feature}</strong></td>
+                    <td>{row.free}</td>
+                    <td>{row.pro}</td>
+                    <td>{row.proPlus}</td>
                   </tr>
                 ))}
               </tbody>
