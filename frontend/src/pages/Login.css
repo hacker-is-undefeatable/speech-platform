@@ -696,9 +696,9 @@
   cursor: pointer;
   padding: 0.85rem 0.5rem 0.85rem 0.5rem;
   text-align: right;
-  width: auto;           /* Only as wide as the text */
-  display: inline-block; /* Shrink to fit text */
-  float: right;          /* Align right within parent */
+  width: auto;          
+  display: inline-block; 
+  float: right;          
 }
 
 .forgot-button:hover {
