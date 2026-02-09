@@ -829,21 +829,6 @@ export default function Login({ setIsAuthenticated }) {
                           <div className="loader-dot dot-3"></div>
                         </div>
                       </button>
-                      <div className="divider">
-                        <div className="divider-line"></div>
-                        <span>or</span>
-                        <div className="divider-line"></div>
-                      </div>
-                      <div className="creative-social">
-                        <button className="social-btn behance-btn" onClick={() => handleSocialLogin('Behance')}>
-                          <span className="social-icon behance-icon"></span>
-                          Behance
-                        </button>
-                        <button className="social-btn dribbble-btn" onClick={() => handleSocialLogin('Dribbble')}>
-                          <span className="social-icon dribbble-icon"></span>
-                          Dribbble
-                        </button>
-                      </div>
                       <div className="signup-link">
                         <button
                           className="toggle-link"
