@@ -46,56 +46,6 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
   };
 
   useEffect(() => {
-    const loadTranscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: sessions, error: sessionError } = await supabase
-          .from('transcription_sessions')
-          .select('session_id')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (sessionError && sessionError.code !== 'PGRST116') {
-          console.error('Error loading session:', sessionError);
-          setError('Failed to load transcription session. Please try again.');
-          return;
-        }
-
-        const sessionId = sessions?.session_id;
-        if (sessionId) {
-          const { data: chunks, error: chunkError } = await supabase
-            .from('transcription_chunks')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('chunk_index', { ascending: true });
-
-          if (chunkError) {
-            console.error('Error loading chunks:', chunkError);
-            setError('Failed to load transcription data. Please try again.');
-          } else if (chunks) {
-            setTranscript(
-              chunks.map((chunk) => ({
-                chunk_index: chunk.chunk_index,
-                timestamp: `${parseFloat(chunk.start_time).toFixed(2)}s - ${parseFloat(chunk.end_time).toFixed(2)}s`,
-                start_time: parseFloat(chunk.start_time).toFixed(2),
-                end_time: parseFloat(chunk.end_time).toFixed(2),
-                speaker: `Speaker ${chunk.speaker.replace('SPEAKER_', '')}`,
-                speakerId: chunk.speaker,
-                text: chunk.transcription_text || '',
-                audio_chunk_url: chunk.audio_chunk_url,
-              }))
-            );
-            setHasTranscribed(chunks.length > 0);
-          }
-        }
-      }
-    };
-    loadTranscription();
-  }, []);
-
-  useEffect(() => {
     // Initialize WaveSurfer for each transcript entry
     waveformRefs.current = Array(transcript.length).fill().map((_, i) => waveformRefs.current[i] || React.createRef());
     wavesurferRefs.current = Array(transcript.length).fill(null);
@@ -300,48 +250,7 @@ function Transcribe({ isAuthenticated, setIsAuthenticated, language, setLanguage
     setTranscript(updatedTranscript);
   };
 
-  const handleSave = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('User not authenticated');
-      }
 
-      const { data: sessionData } = await supabase
-        .from('transcription_sessions')
-        .select('session_id')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!sessionData) {
-        throw new Error('No session found');
-      }
-
-      const sessionId = sessionData.session_id;
-
-      for (const entry of transcript) {
-        const { error } = await supabase
-          .from('transcription_chunks')
-          .update({
-            transcription_text: entry.text,
-            speaker: entry.speakerId,
-          })
-          .eq('session_id', sessionId)
-          .eq('chunk_index', entry.chunk_index);
-
-        if (error) {
-          throw new Error(`Error updating chunk ${entry.chunk_index}: ${error.message}`);
-        }
-      }
-
-      alert('Transcript saved successfully!');
-    } catch (error) {
-      console.error('Error saving transcript:', error);
-      setError('Failed to save transcript. Please try again.');
-    }
-  };
 
   const handleTogglePlay = (index) => {
     if (wavesurferRefs.current[index]) {
