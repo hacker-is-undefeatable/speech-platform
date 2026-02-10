@@ -241,7 +241,6 @@ function Home({ isAuthenticated, setIsAuthenticated, language, setLanguage }) {
               <h3>Contact Us</h3>
               <p className="info">Email: sonocanto4u@gmail.com</p>
               <p className="info">Phone: +852 96651800</p>
-              <p className="info">Address: ???</p>
             </div>
             <div className="footer-section">
               <h3>Follow Us</h3>
